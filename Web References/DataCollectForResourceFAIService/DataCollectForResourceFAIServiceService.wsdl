@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:tns="http://machine.ws.atlmes.com/" targetNamespace="http://machine.ws.atlmes.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema targetNamespace="http://www.sap.com/me/datacollection" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:simpleType name="ParameterDataType">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="NUMBER" />
+          <xs:enumeration value="TEXT" />
+          <xs:enumeration value="FORMULA" />
+          <xs:enumeration value="BOOLEAN" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:schema>
+    <xs:schema targetNamespace="http://www.sap.com/me/common" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:simpleType name="ObjectAliasEnum">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="ACTIVITY" />
+          <xs:enumeration value="ACTIVITY_GROUP" />
+          <xs:enumeration value="ACTIVITY_LOG" />
+          <xs:enumeration value="ALARM" />
+          <xs:enumeration value="ALARM_LOG" />
+          <xs:enumeration value="APPLICATION_SETTING" />
+          <xs:enumeration value="ATTACHMENT" />
+          <xs:enumeration value="ATTENDANCE_LOG" />
+          <xs:enumeration value="BACKGROUND_PROCESS" />
+          <xs:enumeration value="BOM" />
+          <xs:enumeration value="BOM_COMPONENT" />
+          <xs:enumeration value="BUYOFF" />
+          <xs:enumeration value="BUYOFF_LOG" />
+          <xs:enumeration value="CERTIFICATION" />
+          <xs:enumeration value="CNC_PROGRAM" />
+          <xs:enumeration value="CONTAINER" />
+          <xs:enumeration value="CONTAINER_DATA" />
+          <xs:enumeration value="COST_CENTER" />
+          <xs:enumeration value="CUSTOMER" />
+          <xs:enumeration value="DATA_FIELD" />
+          <xs:enumeration value="DATA_TYPE" />
+          <xs:enumeration value="DC_GROUP" />
+          <xs:enumeration value="DOCUMENT" />
+          <xs:enumeration value="INVENTORY" />
+          <xs:enumeration value="INVENTORY_LOG" />
+          <xs:enumeration value="ITEM_GROUP" />
+          <xs:enumeration value="LABOR_CHARGE_CODE" />
+          <xs:enumeration value="MESSAGE" />
+          <xs:enumeration value="MESSAGE_LOG" />
+          <xs:enumeration value="MESSAGE_TYPE" />
+          <xs:enumeration value="NC_CODE" />
+          <xs:enumeration value="NEXT_NUMBER" />
+          <xs:enumeration value="OPERATION" />
+          <xs:enumeration value="PROCESS_LOT" />
+          <xs:enumeration value="PRODUCTION_LOG" />
+          <xs:enumeration value="REASON_CODE" />
+          <xs:enumeration value="SAMPLE_PLAN" />
+          <xs:enumeration value="WORK_INSTRUCTION" />
+          <xs:enumeration value="ITEM" />
+          <xs:enumeration value="RESOURCE" />
+          <xs:enumeration value="ROUTER" />
+          <xs:enumeration value="SHOP_ORDER" />
+          <xs:enumeration value="ROUTER_STEP" />
+          <xs:enumeration value="ROUTER_OPERATION" />
+          <xs:enumeration value="SFC" />
+          <xs:enumeration value="USR" />
+          <xs:enumeration value="USER_GROUP" />
+          <xs:enumeration value="WORK_CENTER" />
+          <xs:enumeration value="WORKSTATION" />
+          <xs:enumeration value="RESOURCE_TYPE" />
+          <xs:enumeration value="CUSTOMER_ORDER" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:schema>
+    <xs:schema xmlns:ns2="http://www.sap.com/me/common" xmlns:ns1="http://www.sap.com/me/datacollection" targetNamespace="http://machine.ws.atlmes.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:import namespace="http://www.sap.com/me/datacollection" />
+      <xs:import namespace="http://www.sap.com/me/common" />
+      <xs:element name="BusinessException" type="tns:BusinessException" />
+      <xs:element name="dataCollectForResourceFAI" type="tns:dataCollectForResourceFAI" />
+      <xs:element name="dataCollectForResourceFAIRequest" type="tns:dataCollectForResourceFAIRequest" />
+      <xs:element name="dataCollectForResourceFAIResponse" type="tns:dataCollectForResourceFAIResponse" />
+      <xs:element name="erroAvoid" type="tns:erroAvoid" />
+      <xs:element name="erroAvoidResponse" type="tns:erroAvoidResponse" />
+      <xs:element name="getCustomDataValueEx" type="tns:getCustomDataValueEx" />
+      <xs:element name="getCustomDataValueExResponse" type="tns:getCustomDataValueExResponse" />
+      <xs:element name="machineIntegrationParametricData" type="tns:machineIntegrationParametricData" />
+      <xs:element name="machineIntegrationResourceDcResponse" type="tns:machineIntegrationResourceDcResponse" />
+      <xs:complexType name="dataCollectForResourceFAI">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="resourceRequest" type="tns:dataCollectForResourceFAIRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="dataCollectForResourceFAIRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="dcGroup" type="xs:string" />
+          <xs:element name="dcMode" type="xs:string" />
+          <xs:element minOccurs="0" name="sfc" type="xs:string" />
+          <xs:element name="material" type="xs:string" />
+          <xs:element name="materialRevision" type="xs:string" />
+          <xs:element minOccurs="0" name="dcGroupRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element minOccurs="0" name="operation" type="xs:string" />
+          <xs:element name="operationRevision" type="xs:string" />
+          <xs:element name="dcGroupSequence" type="xs:string" />
+          <xs:element name="user" type="xs:string" />
+          <xs:element maxOccurs="unbounded" name="parametricDataArray" type="tns:machineIntegrationParametricData" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="machineIntegrationParametricData">
+        <xs:sequence>
+          <xs:element name="name" type="xs:string" />
+          <xs:element name="value" type="xs:string" />
+          <xs:element name="dataType" type="ns1:ParameterDataType" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="dataCollectForResourceFAIResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:machineIntegrationResourceDcResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="machineIntegrationResourceDcResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="code" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="erroAvoid">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="arg0" type="xs:string" />
+          <xs:element minOccurs="0" name="arg1" type="xs:string" />
+          <xs:element minOccurs="0" name="arg2" type="xs:string" />
+          <xs:element minOccurs="0" name="arg3" type="xs:string" />
+          <xs:element minOccurs="0" name="arg4" type="xs:string" />
+          <xs:element minOccurs="0" name="arg5" type="tns:systemBase" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="systemBase">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseDataSource">
+            <xs:sequence />
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="baseDataSource">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:abstractDataSource">
+            <xs:sequence />
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="abstractDataSource" abstract="true">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseObject">
+            <xs:sequence>
+              <xs:element minOccurs="0" name="dataSourceName" type="xs:string" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="baseObject">
+        <xs:sequence />
+      </xs:complexType>
+      <xs:complexType name="erroAvoidResponse">
+        <xs:sequence />
+      </xs:complexType>
+      <xs:complexType name="BusinessException">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="details" type="xs:anyType" />
+          <xs:element name="errorCode" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="suppressed" type="tns:throwable" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="throwable">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="stackTrace" nillable="true" type="tns:stackTraceElement" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="stackTraceElement" final="extension restriction">
+        <xs:sequence />
+      </xs:complexType>
+      <xs:complexType name="getCustomDataValueEx">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="arg0" type="xs:string" />
+          <xs:element minOccurs="0" name="arg1" type="ns2:ObjectAliasEnum" />
+          <xs:element minOccurs="0" name="arg2" type="xs:string" />
+          <xs:element minOccurs="0" name="arg3" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getCustomDataValueExResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="dataCollectForResourceFAIIn">
+    <wsdl:part name="parameters" element="tns:dataCollectForResourceFAI" />
+  </wsdl:message>
+  <wsdl:message name="dataCollectForResourceFAIOut">
+    <wsdl:part name="dataCollectForResourceFAIResponse" element="tns:dataCollectForResourceFAIResponse" />
+  </wsdl:message>
+  <wsdl:message name="erroAvoidIn">
+    <wsdl:part name="parameters" element="tns:erroAvoid" />
+  </wsdl:message>
+  <wsdl:message name="erroAvoidOut">
+    <wsdl:part name="erroAvoidResponse" element="tns:erroAvoidResponse" />
+  </wsdl:message>
+  <wsdl:message name="erroAvoidFault">
+    <wsdl:part name="BusinessException" element="tns:BusinessException" />
+  </wsdl:message>
+  <wsdl:message name="getCustomDataValueExIn">
+    <wsdl:part name="parameters" element="tns:getCustomDataValueEx" />
+  </wsdl:message>
+  <wsdl:message name="getCustomDataValueExOut">
+    <wsdl:part name="getCustomDataValueExResponse" element="tns:getCustomDataValueExResponse" />
+  </wsdl:message>
+  <wsdl:message name="getCustomDataValueExFault">
+    <wsdl:part name="BusinessException" element="tns:BusinessException" />
+  </wsdl:message>
+  <wsdl:portType name="DataCollectForResourceFAIService">
+    <wsdl:operation name="dataCollectForResourceFAI" parameterOrder="parameters">
+      <wsdl:input message="tns:dataCollectForResourceFAIIn" />
+      <wsdl:output message="tns:dataCollectForResourceFAIOut" />
+    </wsdl:operation>
+    <wsdl:operation name="erroAvoid" parameterOrder="parameters">
+      <wsdl:input message="tns:erroAvoidIn" />
+      <wsdl:output message="tns:erroAvoidOut" />
+      <wsdl:fault name="BusinessException" message="tns:erroAvoidFault" />
+    </wsdl:operation>
+    <wsdl:operation name="getCustomDataValueEx" parameterOrder="parameters">
+      <wsdl:input message="tns:getCustomDataValueExIn" />
+      <wsdl:output message="tns:getCustomDataValueExOut" />
+      <wsdl:fault name="BusinessException" message="tns:getCustomDataValueExFault" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" name="DataCollectForResourceFAIServiceBinding" type="tns:DataCollectForResourceFAIService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="dataCollectForResourceFAI">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="erroAvoid">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="BusinessException">
+        <soap:fault use="literal" name="BusinessException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getCustomDataValueEx">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="BusinessException">
+        <soap:fault use="literal" name="BusinessException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="DataCollectForResourceFAIServiceService">
+    <wsdl:port name="DataCollectForResourceFAIServicePort" binding="tns:DataCollectForResourceFAIServiceBinding">
+      <address location="http://xpmesp021.catlfaw.com:50100/atlmeswebservice/DataCollectForResourceFAIServiceService" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

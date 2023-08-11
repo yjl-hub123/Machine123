@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:tns="http://celltestintegration.ws.atlmes.com/" targetNamespace="http://celltestintegration.ws.atlmes.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema targetNamespace="http://celltestintegration.ws.atlmes.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="checkProcessLotRequest" type="tns:checkProcessLotRequest" />
+      <xs:element name="checkProcessLotResponse" type="tns:checkProcessLotResponse" />
+      <xs:element name="miCheckProcessLot" type="tns:miCheckProcessLot" />
+      <xs:element name="miCheckProcessLotResponse" type="tns:miCheckProcessLotResponse" />
+      <xs:complexType name="miCheckProcessLot">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="Request" type="tns:checkProcessLotRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="checkProcessLotRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miCheckProcessLotResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:checkProcessLotResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="checkProcessLotResponse">
+        <xs:sequence>
+          <xs:element name="code" type="xs:string" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="miCheckProcessLotIn">
+    <wsdl:part name="parameters" element="tns:miCheckProcessLot" />
+  </wsdl:message>
+  <wsdl:message name="miCheckProcessLotOut">
+    <wsdl:part name="miCheckProcessLotResponse" element="tns:miCheckProcessLotResponse" />
+  </wsdl:message>
+  <wsdl:portType name="MiCheckProcessLotService">
+    <wsdl:operation name="miCheckProcessLot" parameterOrder="parameters">
+      <wsdl:input message="tns:miCheckProcessLotIn" />
+      <wsdl:output message="tns:miCheckProcessLotOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" name="MiCheckProcessLotServiceBinding" type="tns:MiCheckProcessLotService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="miCheckProcessLot">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="MiCheckProcessLotServiceService">
+    <wsdl:port name="MiCheckProcessLotServicePort" binding="tns:MiCheckProcessLotServiceBinding">
+      <address location="http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiCheckProcessLotServiceService" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

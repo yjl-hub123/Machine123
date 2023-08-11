@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:tns="http://machineintegration.ws.atlmes.com/" targetNamespace="http://machineintegration.ws.atlmes.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema targetNamespace="http://machineintegration.ws.atlmes.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="BusinessException" type="tns:BusinessException" />
+      <xs:element name="miMESIntegrationForParameterValueIssue" type="tns:miMESIntegrationForParameterValueIssue" />
+      <xs:element name="miMESIntegrationForParameterValueIssueData" type="tns:miMESIntegrationForParameterValueIssueData" />
+      <xs:element name="miMESIntegrationForParameterValueIssueParameter" type="tns:miMESIntegrationForParameterValueIssueParameter" />
+      <xs:element name="miMESIntegrationForParameterValueIssueRequest" type="tns:miMESIntegrationForParameterValueIssueRequest" />
+      <xs:element name="miMESIntegrationForParameterValueIssueResponse" nillable="true" type="xs:anyType" />
+      <xs:complexType name="miMESIntegrationForParameterValueIssue">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="MiMESIntegrationForParameterValueIssueRequest" type="tns:miMESIntegrationForParameterValueIssueRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miMESIntegrationForParameterValueIssueRequest">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="site" type="xs:string" />
+          <xs:element minOccurs="0" name="resource" type="xs:string" />
+          <xs:element minOccurs="0" name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="userId" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miMESIntegrationForParameterValueIssueResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:MiMESIntegrationForParameterValueIssueResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="MiMESIntegrationForParameterValueIssueResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="code" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="data" type="tns:miMESIntegrationForParameterValueIssueData" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miMESIntegrationForParameterValueIssueData">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="site" type="xs:string" />
+          <xs:element minOccurs="0" name="resrce" type="xs:string" />
+          <xs:element minOccurs="0" name="item" type="xs:string" />
+          <xs:element minOccurs="0" name="userId" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="parameterArry" type="tns:miMESIntegrationForParameterValueIssueParameter" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miMESIntegrationForParameterValueIssueParameter">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="parameterName" type="xs:string" />
+          <xs:element minOccurs="0" name="parameterValue" type="xs:string" />
+          <xs:element minOccurs="0" name="highLimit" type="xs:string" />
+          <xs:element minOccurs="0" name="lowLimit" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="BusinessException">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="details" type="xs:anyType" />
+          <xs:element name="errorCode" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="suppressed" type="tns:throwable" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="throwable">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="stackTrace" nillable="true" type="tns:stackTraceElement" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="stackTraceElement" final="extension restriction">
+        <xs:sequence />
+      </xs:complexType>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="miMESIntegrationForParameterValueIssueIn">
+    <wsdl:part name="parameters" element="tns:miMESIntegrationForParameterValueIssue" />
+  </wsdl:message>
+  <wsdl:message name="miMESIntegrationForParameterValueIssueOut">
+    <wsdl:part name="miMESIntegrationForParameterValueIssueResponse" element="tns:miMESIntegrationForParameterValueIssueResponse" />
+  </wsdl:message>
+  <wsdl:message name="miMESIntegrationForParameterValueIssueFault">
+    <wsdl:part name="BusinessException" element="tns:BusinessException" />
+  </wsdl:message>
+  <wsdl:portType name="MiMESIntegrationForParameterValueIssueService">
+    <wsdl:operation name="miMESIntegrationForParameterValueIssue" parameterOrder="parameters">
+      <wsdl:input message="tns:miMESIntegrationForParameterValueIssueIn" />
+      <wsdl:output message="tns:miMESIntegrationForParameterValueIssueOut" />
+      <wsdl:fault name="BusinessException" message="tns:miMESIntegrationForParameterValueIssueFault" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" name="MiMESIntegrationForParameterValueIssueServiceBinding" type="tns:MiMESIntegrationForParameterValueIssueService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="miMESIntegrationForParameterValueIssue">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="BusinessException">
+        <soap:fault use="literal" name="BusinessException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="MiMESIntegrationForParameterValueIssueServiceService">
+    <wsdl:port name="MiMESIntegrationForParameterValueIssueServicePort" binding="tns:MiMESIntegrationForParameterValueIssueServiceBinding">
+      <address location="http://gacmes1p024.catlgac.cn:50400/atlmeswebservice/MiMESIntegrationForParameterValueIssueServiceService" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

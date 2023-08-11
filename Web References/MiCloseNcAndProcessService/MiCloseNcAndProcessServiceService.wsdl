@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:tns="http://machineintegration.ws.atlmes.com/" targetNamespace="http://machineintegration.ws.atlmes.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema targetNamespace="http://machineintegration.ws.atlmes.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="BusinessException" type="tns:BusinessException" />
+      <xs:element name="InvalidProcessLotException" type="tns:InvalidProcessLotException" />
+      <xs:element name="closeNcAndProcessRequest" type="tns:closeNcAndProcessRequest" />
+      <xs:element name="closeNcAndProcessResponse" type="tns:closeNcAndProcessResponse" />
+      <xs:element name="miCloseNcAndProcess" type="tns:miCloseNcAndProcess" />
+      <xs:element name="miCloseNcAndProcessResponse" type="tns:miCloseNcAndProcessResponse" />
+      <xs:element name="pmArray" type="tns:pmArray" />
+      <xs:element name="sfcPm" type="tns:sfcPm" />
+      <xs:complexType name="miCloseNcAndProcess">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="CloseNcAndProcessRequest" type="tns:closeNcAndProcessRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="closeNcAndProcessRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="user" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element maxOccurs="unbounded" name="sfcList" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="ncCode" type="xs:string" />
+          <xs:element name="mode" type="tns:HandleNcMode" />
+          <xs:element minOccurs="0" name="NCGroup" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="sfcPmList" type="tns:sfcPm" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="sfcPm">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="sfc" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="pmList" type="tns:pmArray" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="pmArray">
+        <xs:sequence>
+          <xs:element name="pmName" type="xs:string" />
+          <xs:element name="pmValue" type="xs:decimal" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miCloseNcAndProcessResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="return" type="tns:closeNcAndProcessResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="closeNcAndProcessResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="code" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="InvalidProcessLotException">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="details" type="xs:anyType" />
+          <xs:element name="errorCode" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+          <xs:element minOccurs="0" name="processLotRef" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="BusinessException">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="details" type="xs:anyType" />
+          <xs:element name="errorCode" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:simpleType name="HandleNcMode">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="MODE_NONE" />
+          <xs:enumeration value="MODE_PASS" />
+          <xs:enumeration value="MODE_START" />
+          <xs:enumeration value="MODE_COMPLETE" />
+          <xs:enumeration value="MODE_SIGOFF" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="miCloseNcAndProcessIn">
+    <wsdl:part name="parameters" element="tns:miCloseNcAndProcess" />
+  </wsdl:message>
+  <wsdl:message name="miCloseNcAndProcessOut">
+    <wsdl:part name="miCloseNcAndProcessResponse" element="tns:miCloseNcAndProcessResponse" />
+  </wsdl:message>
+  <wsdl:message name="miCloseNcAndProcessFault">
+    <wsdl:part name="BusinessException" element="tns:BusinessException" />
+  </wsdl:message>
+  <wsdl:message name="MiCloseNcAndProcessServicemiCloseNcAndProcessFault">
+    <wsdl:part name="InvalidProcessLotException" element="tns:InvalidProcessLotException" />
+  </wsdl:message>
+  <wsdl:portType name="MiCloseNcAndProcessService">
+    <wsdl:operation name="miCloseNcAndProcess" parameterOrder="parameters">
+      <wsdl:input message="tns:miCloseNcAndProcessIn" />
+      <wsdl:output message="tns:miCloseNcAndProcessOut" />
+      <wsdl:fault name="BusinessException" message="tns:miCloseNcAndProcessFault" />
+      <wsdl:fault name="InvalidProcessLotException" message="tns:MiCloseNcAndProcessServicemiCloseNcAndProcessFault" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" name="MiCloseNcAndProcessServiceBinding" type="tns:MiCloseNcAndProcessService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="miCloseNcAndProcess">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="BusinessException">
+        <soap:fault use="literal" name="BusinessException" namespace="" />
+      </wsdl:fault>
+      <wsdl:fault name="InvalidProcessLotException">
+        <soap:fault use="literal" name="InvalidProcessLotException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="MiCloseNcAndProcessServiceService">
+    <wsdl:port name="MiCloseNcAndProcessServicePort" binding="tns:MiCloseNcAndProcessServiceBinding">
+      <address location="http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiCloseNcAndProcessServiceService" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

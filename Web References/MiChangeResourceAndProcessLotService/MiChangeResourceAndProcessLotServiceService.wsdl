@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:tns="http://machineintegration.ws.atlmes.com/" targetNamespace="http://machineintegration.ws.atlmes.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema targetNamespace="http://machineintegration.ws.atlmes.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="changeResourceAndProcessLotRequest" type="tns:changeResourceAndProcessLotRequest" />
+      <xs:element name="miChangeResourceAndProcessLot" type="tns:miChangeResourceAndProcessLot" />
+      <xs:element name="miChangeResourceAndProcessLotResponse" type="tns:miChangeResourceAndProcessLotResponse" />
+      <xs:element name="miCommonResponse" type="tns:miCommonResponse" />
+      <xs:complexType name="miChangeResourceAndProcessLot">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="ChangeResourceAndProcessLotRequest" type="tns:changeResourceAndProcessLotRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="changeResourceAndProcessLotRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element minOccurs="0" name="operation" type="xs:string" />
+          <xs:element name="operationRevision" type="xs:string" />
+          <xs:element name="previousProcessLot" type="xs:string" />
+          <xs:element name="currentProcessLot" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element name="mode" type="xs:boolean" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miChangeResourceAndProcessLotResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:miCommonResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="miCommonResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="code" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="miChangeResourceAndProcessLotIn">
+    <wsdl:part name="parameters" element="tns:miChangeResourceAndProcessLot" />
+  </wsdl:message>
+  <wsdl:message name="miChangeResourceAndProcessLotOut">
+    <wsdl:part name="miChangeResourceAndProcessLotResponse" element="tns:miChangeResourceAndProcessLotResponse" />
+  </wsdl:message>
+  <wsdl:portType name="MiChangeResourceAndProcessLotService">
+    <wsdl:operation name="miChangeResourceAndProcessLot" parameterOrder="parameters">
+      <wsdl:input message="tns:miChangeResourceAndProcessLotIn" />
+      <wsdl:output message="tns:miChangeResourceAndProcessLotOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" name="MiChangeResourceAndProcessLotServiceBinding" type="tns:MiChangeResourceAndProcessLotService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="miChangeResourceAndProcessLot">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="MiChangeResourceAndProcessLotServiceService">
+    <wsdl:port name="MiChangeResourceAndProcessLotServicePort" binding="tns:MiChangeResourceAndProcessLotServiceBinding">
+      <address location="http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiChangeResourceAndProcessLotServiceService" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

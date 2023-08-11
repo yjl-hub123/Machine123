@@ -1,0 +1,33 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Machine.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="Machine_WebReference_MiCheckProcessLotServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiCheckProcessLotServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_WebReference1_MiCheckSFCStatusExServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiCheckSFCStatusExServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_MiBindSFCintoTrayServiceService_MiBindSFCintoTrayServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiBindSFCintoTrayServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_MachineIntegrationServiceService_MachineIntegrationServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MachineIntegrationServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_CellTestIntegrationServiceService_CellTestIntegrationServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/CellTestIntegrationServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_MiChangeResourceAndProcessLotServiceService_MiChangeResourceAndProcessLotServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiChangeResourceAndProcessLotServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_MiCloseNcAndProcessService_MiCloseNcAndProcessServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/MiCloseNcAndProcessServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_DataCollectForResourceFAIService_DataCollectForResourceFAIServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://xpmesp021.catlfaw.com:50100/atlmeswebservice/DataCollectForResourceFAIServiceService</Value>
+    </Setting>
+    <Setting Name="Machine_MiMESIntegrationForParameterValueIssueServiceService_MiMESIntegrationForParameterValueIssueServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://gacmes1p024.catlgac.cn:50400/atlmeswebservice/MiMESIntegrationForParameterValueIssueServiceService</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

@@ -1,0 +1,942 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:tns="http://celltest.ws.atlmes.com/" targetNamespace="http://celltest.ws.atlmes.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema xmlns:ns1="http://www.sap.com/me/datacollection" targetNamespace="http://celltest.ws.atlmes.com/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:import namespace="http://www.sap.com/me/datacollection" />
+      <xs:element name="CellTestIntegrationException" type="tns:CellTestIntegrationException" />
+      <xs:element name="agResultRequest" type="tns:agResultRequest" />
+      <xs:element name="agResultResponse" type="tns:agResultResponse" />
+      <xs:element name="baseResponse" type="tns:baseResponse" />
+      <xs:element name="cellListRequest" type="tns:cellListRequest" />
+      <xs:element name="cellListResponse" type="tns:cellListResponse" />
+      <xs:element name="cellTestResultRequest" type="tns:cellTestResultRequest" />
+      <xs:element name="cellTestResultResponse" type="tns:cellTestResultResponse" />
+      <xs:element name="channelStatus" type="tns:channelStatus" />
+      <xs:element name="channelStatusRequest" type="tns:channelStatusRequest" />
+      <xs:element name="channelStatusResponse" type="tns:channelStatusResponse" />
+      <xs:element name="completeFormation" type="tns:completeFormation" />
+      <xs:element name="completeFormationResponse" type="tns:completeFormationResponse" />
+      <xs:element name="completeOCV" type="tns:completeOCV" />
+      <xs:element name="completeOCVResponse" type="tns:completeOCVResponse" />
+      <xs:element name="completeStandby" type="tns:completeStandby" />
+      <xs:element name="completeStandbyResponse" type="tns:completeStandbyResponse" />
+      <xs:element name="formationCompleteRequest" type="tns:formationCompleteRequest" />
+      <xs:element name="formationCompleteResponse" type="tns:formationCompleteResponse" />
+      <xs:element name="formationRequest" type="tns:formationRequest" />
+      <xs:element name="formationResponse" type="tns:formationResponse" />
+      <xs:element name="getCellListByTrayId" type="tns:getCellListByTrayId" />
+      <xs:element name="getCellListByTrayIdResponse" type="tns:getCellListByTrayIdResponse" />
+      <xs:element name="getCellTestResultByTrayId" type="tns:getCellTestResultByTrayId" />
+      <xs:element name="getCellTestResultByTrayIdResponse" type="tns:getCellTestResultByTrayIdResponse" />
+      <xs:element name="getChannelStatus" type="tns:getChannelStatus" />
+      <xs:element name="getChannelStatusResponse" type="tns:getChannelStatusResponse" />
+      <xs:element name="getOcvType" type="tns:getOcvType" />
+      <xs:element name="getOcvTypeResponse" type="tns:getOcvTypeResponse" />
+      <xs:element name="getProcessFilePathByTrayId" type="tns:getProcessFilePathByTrayId" />
+      <xs:element name="getProcessFilePathByTrayIdResponse" type="tns:getProcessFilePathByTrayIdResponse" />
+      <xs:element name="getStandbyDuration" type="tns:getStandbyDuration" />
+      <xs:element name="getStandbyDurationResponse" type="tns:getStandbyDurationResponse" />
+      <xs:element name="icResultRequest" type="tns:icResultRequest" />
+      <xs:element name="icResultResponse" type="tns:icResultResponse" />
+      <xs:element name="isFormationReady" type="tns:isFormationReady" />
+      <xs:element name="isFormationReadyResponse" type="tns:isFormationReadyResponse" />
+      <xs:element name="machineIntegrationParametricData" type="tns:machineIntegrationParametricData" />
+      <xs:element name="ocvCompleteRequest" type="tns:ocvCompleteRequest" />
+      <xs:element name="ocvCompleteResponse" type="tns:ocvCompleteResponse" />
+      <xs:element name="ocvResultRequest" type="tns:ocvResultRequest" />
+      <xs:element name="ocvResultResponse" type="tns:ocvResultResponse" />
+      <xs:element name="ocvTypeRequest" type="tns:ocvTypeRequest" />
+      <xs:element name="ocvTypeResponse" type="tns:ocvTypeResponse" />
+      <xs:element name="postAGResult" type="tns:postAGResult" />
+      <xs:element name="postAGResultResponse" type="tns:postAGResultResponse" />
+      <xs:element name="postICResult" type="tns:postICResult" />
+      <xs:element name="postICResultResponse" type="tns:postICResultResponse" />
+      <xs:element name="postOCVResult" type="tns:postOCVResult" />
+      <xs:element name="postOCVResultResponse" type="tns:postOCVResultResponse" />
+      <xs:element name="processFilePathRequest" type="tns:processFilePathRequest" />
+      <xs:element name="processFilePathResponse" type="tns:processFilePathResponse" />
+      <xs:element name="processLotReleaseRequest" type="tns:processLotReleaseRequest" />
+      <xs:element name="processLotReleaseResponse" type="tns:processLotReleaseResponse" />
+      <xs:element name="releaseTrayId" type="tns:releaseTrayId" />
+      <xs:element name="releaseTrayIdResponse" type="tns:releaseTrayIdResponse" />
+      <xs:element name="removeCellFromTrayId" type="tns:removeCellFromTrayId" />
+      <xs:element name="removeCellFromTrayIdResponse" type="tns:removeCellFromTrayIdResponse" />
+      <xs:element name="sfcChannelData" type="tns:sfcChannelData" />
+      <xs:element name="sfcNcCode" type="tns:sfcNcCode" />
+      <xs:element name="sfcRemovalRequest" type="tns:sfcRemovalRequest" />
+      <xs:element name="sfcRemovalResponse" type="tns:sfcRemovalResponse" />
+      <xs:element name="sfcResult" type="tns:sfcResult" />
+      <xs:element name="standbyCompleteRequest" type="tns:standbyCompleteRequest" />
+      <xs:element name="standbyCompleteResponse" type="tns:standbyCompleteResponse" />
+      <xs:element name="standbyDurationRequest" type="tns:standbyDurationRequest" />
+      <xs:element name="standbyDurationResponse" type="tns:standbyDurationResponse" />
+      <xs:element name="standbyStartRequest" type="tns:standbyStartRequest" />
+      <xs:element name="standbyStartResponse" type="tns:standbyStartResponse" />
+      <xs:element name="startStandby" type="tns:startStandby" />
+      <xs:element name="startStandbyResponse" type="tns:startStandbyResponse" />
+      <xs:complexType name="getCellListByTrayId">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="CellListRequest" type="tns:cellListRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="cellListRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="mode" type="tns:ModeTrayMatrix" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getCellListByTrayIdResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:cellListResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="cellListResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="sfcList" type="xs:string" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="baseResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="code" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getOcvType">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="OcvTypeRequest" type="tns:ocvTypeRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ocvTypeRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getOcvTypeResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:ocvTypeResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ocvTypeResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element minOccurs="0" name="ocvType" type="xs:string" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="isFormationReady">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="FormationRequest" type="tns:formationRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="formationRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="isFormationReadyResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:formationResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="formationResponse">
+        <xs:sequence>
+          <xs:element name="returnCode" type="xs:int" />
+          <xs:element name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="CellTestIntegrationException">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="completeStandby">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="FormationRequest" type="tns:standbyCompleteRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="standbyCompleteRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="completeStandbyResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:standbyCompleteResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="standbyCompleteResponse">
+        <xs:sequence>
+          <xs:element name="returnCode" type="xs:int" />
+          <xs:element name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getChannelStatus">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="ChannelStatusRequest" type="tns:channelStatusRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="channelStatusRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element name="tier" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getChannelStatusResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:channelStatusResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="channelStatusResponse">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="channelStatusList" type="tns:channelStatus" />
+          <xs:element name="returnCode" type="xs:int" />
+          <xs:element name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="channelStatus">
+        <xs:sequence>
+          <xs:element name="channel" type="xs:string" />
+          <xs:element name="status" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getProcessFilePathByTrayId">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="ProcessFilePathRequest" type="tns:processFilePathRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="processFilePathRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="mode" type="tns:ModeProcessFilePath" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getProcessFilePathByTrayIdResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:processFilePathResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="processFilePathResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element minOccurs="0" name="processFilePath" type="xs:string" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="postICResult">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="ICResultRequest" type="tns:icResultRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="icResultRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element name="sfc" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="user" type="xs:string" />
+          <xs:element name="activityID" type="xs:string" />
+          <xs:element name="controlSystemID" type="xs:string" />
+          <xs:element name="channelID" type="xs:string" />
+          <xs:element maxOccurs="unbounded" name="parametricDataArray" type="tns:machineIntegrationParametricData" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="machineIntegrationParametricData">
+        <xs:sequence>
+          <xs:element name="name" type="xs:string" />
+          <xs:element name="value" type="xs:string" />
+          <xs:element name="dataType" type="ns1:ParameterDataType" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="postICResultResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:icResultResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="icResultResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence />
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="postAGResult">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="AGResultRequest" type="tns:agResultRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="agResultRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="sfc" type="xs:string" />
+          <xs:element name="AGTestType" type="tns:AGtestType" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element name="controlSystemID" type="xs:string" />
+          <xs:element name="channelID" type="xs:string" />
+          <xs:element name="user" type="xs:string" />
+          <xs:element name="activityID" type="xs:string" />
+          <xs:element maxOccurs="unbounded" name="resultArray" type="tns:machineIntegrationParametricData" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="postAGResultResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:agResultResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="agResultResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="failedSFCList" type="tns:sfcChannelData" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="sfcChannelData">
+        <xs:sequence>
+          <xs:element name="sfc" type="xs:string" />
+          <xs:element name="channel" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="postOCVResult">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="OCVResultRequest" type="tns:ocvResultRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ocvResultRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+          <xs:element name="sfc" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="user" type="xs:string" />
+          <xs:element name="activityID" type="xs:string" />
+          <xs:element maxOccurs="unbounded" name="parametricDataArray" type="tns:machineIntegrationParametricData" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="postOCVResultResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:ocvResultResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ocvResultResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element minOccurs="0" name="ncCode" type="xs:string" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="completeOCV">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="OCVCompleteRequest" type="tns:ocvCompleteRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ocvCompleteRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="mode" type="tns:ModeTrayMatrix" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="completeOCVResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:ocvCompleteResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="ocvCompleteResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="sfcNCCodeList" type="tns:sfcNcCode" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="sfcNcCode">
+        <xs:sequence>
+          <xs:element name="sfc" type="xs:string" />
+          <xs:element name="ncCode" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="removeCellFromTrayId">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="SfcRemovalRequest" type="tns:sfcRemovalRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="sfcRemovalRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="sfc" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="removeCellFromTrayIdResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:sfcRemovalResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="sfcRemovalResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element name="response" type="xs:boolean" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="getCellTestResultByTrayId">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="Request" type="tns:cellTestResultRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="cellTestResultRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="mode" type="tns:ModeTrayMatrix" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getCellTestResultByTrayIdResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:cellTestResultResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="cellTestResultResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="resultArray" type="tns:sfcResult" />
+          <xs:element minOccurs="0" name="code" type="xs:int" />
+          <xs:element minOccurs="0" name="message" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="sfcResult">
+        <xs:sequence>
+          <xs:element name="sfc" type="xs:string" />
+          <xs:element name="result" type="xs:int" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="completeFormation">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="FormationCompleteRequest" type="tns:formationCompleteRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="formationCompleteRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="completeFormationResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:formationCompleteResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="formationCompleteResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:all />
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="releaseTrayId">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="ProcessLotReleaseRequest" type="tns:processLotReleaseRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="processLotReleaseRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="releaseTrayIdResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:processLotReleaseResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="processLotReleaseResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:all />
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="startStandby">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="StandbyStartRequest" type="tns:standbyStartRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="standbyStartRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="startStandbyResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:standbyStartResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="standbyStartResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element name="minTime" type="xs:double" />
+              <xs:element name="expirTime" type="xs:double" />
+              <xs:element name="maxTime" type="xs:double" />
+              <xs:element name="scrapTime" type="xs:double" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:complexType name="getStandbyDuration">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="StandbyDurationRequest" type="tns:standbyDurationRequest" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="standbyDurationRequest">
+        <xs:sequence>
+          <xs:element name="site" type="xs:string" />
+          <xs:element name="processLot" type="xs:string" />
+          <xs:element name="operation" type="xs:string" />
+          <xs:element minOccurs="0" name="operationRevision" type="xs:string" />
+          <xs:element name="resource" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getStandbyDurationResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:standbyDurationResponse" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="standbyDurationResponse">
+        <xs:complexContent mixed="false">
+          <xs:extension base="tns:baseResponse">
+            <xs:sequence>
+              <xs:element name="minTime" type="xs:double" />
+              <xs:element name="expirTime" type="xs:double" />
+              <xs:element name="maxTime" type="xs:double" />
+              <xs:element name="scrapTime" type="xs:double" />
+            </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
+      </xs:complexType>
+      <xs:simpleType name="ModeTrayMatrix">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="ROW-FIRST" />
+          <xs:enumeration value="COLUMN-FIRST" />
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType name="ModeProcessFilePath">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="NORMAL" />
+          <xs:enumeration value="RETEST" />
+          <xs:enumeration value="AUTO" />
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType name="AGtestType">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="INIT" />
+          <xs:enumeration value="PASS" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:schema>
+    <xs:schema targetNamespace="http://www.sap.com/me/datacollection" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:simpleType name="ParameterDataType">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="NUMBER" />
+          <xs:enumeration value="TEXT" />
+          <xs:enumeration value="FORMULA" />
+          <xs:enumeration value="BOOLEAN" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="getCellListByTrayIdIn">
+    <wsdl:part name="parameters" element="tns:getCellListByTrayId" />
+  </wsdl:message>
+  <wsdl:message name="getCellListByTrayIdOut">
+    <wsdl:part name="getCellListByTrayIdResponse" element="tns:getCellListByTrayIdResponse" />
+  </wsdl:message>
+  <wsdl:message name="getOcvTypeIn">
+    <wsdl:part name="parameters" element="tns:getOcvType" />
+  </wsdl:message>
+  <wsdl:message name="getOcvTypeOut">
+    <wsdl:part name="getOcvTypeResponse" element="tns:getOcvTypeResponse" />
+  </wsdl:message>
+  <wsdl:message name="isFormationReadyIn">
+    <wsdl:part name="parameters" element="tns:isFormationReady" />
+  </wsdl:message>
+  <wsdl:message name="isFormationReadyOut">
+    <wsdl:part name="isFormationReadyResponse" element="tns:isFormationReadyResponse" />
+  </wsdl:message>
+  <wsdl:message name="isFormationReadyFault">
+    <wsdl:part name="CellTestIntegrationException" element="tns:CellTestIntegrationException" />
+  </wsdl:message>
+  <wsdl:message name="completeStandbyIn">
+    <wsdl:part name="parameters" element="tns:completeStandby" />
+  </wsdl:message>
+  <wsdl:message name="completeStandbyOut">
+    <wsdl:part name="completeStandbyResponse" element="tns:completeStandbyResponse" />
+  </wsdl:message>
+  <wsdl:message name="completeStandbyFault">
+    <wsdl:part name="CellTestIntegrationException" element="tns:CellTestIntegrationException" />
+  </wsdl:message>
+  <wsdl:message name="getChannelStatusIn">
+    <wsdl:part name="parameters" element="tns:getChannelStatus" />
+  </wsdl:message>
+  <wsdl:message name="getChannelStatusOut">
+    <wsdl:part name="getChannelStatusResponse" element="tns:getChannelStatusResponse" />
+  </wsdl:message>
+  <wsdl:message name="getProcessFilePathByTrayIdIn">
+    <wsdl:part name="parameters" element="tns:getProcessFilePathByTrayId" />
+  </wsdl:message>
+  <wsdl:message name="getProcessFilePathByTrayIdOut">
+    <wsdl:part name="getProcessFilePathByTrayIdResponse" element="tns:getProcessFilePathByTrayIdResponse" />
+  </wsdl:message>
+  <wsdl:message name="getProcessFilePathByTrayIdFault">
+    <wsdl:part name="CellTestIntegrationException" element="tns:CellTestIntegrationException" />
+  </wsdl:message>
+  <wsdl:message name="postICResultIn">
+    <wsdl:part name="parameters" element="tns:postICResult" />
+  </wsdl:message>
+  <wsdl:message name="postICResultOut">
+    <wsdl:part name="postICResultResponse" element="tns:postICResultResponse" />
+  </wsdl:message>
+  <wsdl:message name="postAGResultIn">
+    <wsdl:part name="parameters" element="tns:postAGResult" />
+  </wsdl:message>
+  <wsdl:message name="postAGResultOut">
+    <wsdl:part name="postAGResultResponse" element="tns:postAGResultResponse" />
+  </wsdl:message>
+  <wsdl:message name="postAGResultFault">
+    <wsdl:part name="CellTestIntegrationException" element="tns:CellTestIntegrationException" />
+  </wsdl:message>
+  <wsdl:message name="postOCVResultIn">
+    <wsdl:part name="parameters" element="tns:postOCVResult" />
+  </wsdl:message>
+  <wsdl:message name="postOCVResultOut">
+    <wsdl:part name="postOCVResultResponse" element="tns:postOCVResultResponse" />
+  </wsdl:message>
+  <wsdl:message name="completeOCVIn">
+    <wsdl:part name="parameters" element="tns:completeOCV" />
+  </wsdl:message>
+  <wsdl:message name="completeOCVOut">
+    <wsdl:part name="completeOCVResponse" element="tns:completeOCVResponse" />
+  </wsdl:message>
+  <wsdl:message name="removeCellFromTrayIdIn">
+    <wsdl:part name="parameters" element="tns:removeCellFromTrayId" />
+  </wsdl:message>
+  <wsdl:message name="removeCellFromTrayIdOut">
+    <wsdl:part name="removeCellFromTrayIdResponse" element="tns:removeCellFromTrayIdResponse" />
+  </wsdl:message>
+  <wsdl:message name="removeCellFromTrayIdFault">
+    <wsdl:part name="CellTestIntegrationException" element="tns:CellTestIntegrationException" />
+  </wsdl:message>
+  <wsdl:message name="getCellTestResultByTrayIdIn">
+    <wsdl:part name="parameters" element="tns:getCellTestResultByTrayId" />
+  </wsdl:message>
+  <wsdl:message name="getCellTestResultByTrayIdOut">
+    <wsdl:part name="getCellTestResultByTrayIdResponse" element="tns:getCellTestResultByTrayIdResponse" />
+  </wsdl:message>
+  <wsdl:message name="completeFormationIn">
+    <wsdl:part name="parameters" element="tns:completeFormation" />
+  </wsdl:message>
+  <wsdl:message name="completeFormationOut">
+    <wsdl:part name="completeFormationResponse" element="tns:completeFormationResponse" />
+  </wsdl:message>
+  <wsdl:message name="releaseTrayIdIn">
+    <wsdl:part name="parameters" element="tns:releaseTrayId" />
+  </wsdl:message>
+  <wsdl:message name="releaseTrayIdOut">
+    <wsdl:part name="releaseTrayIdResponse" element="tns:releaseTrayIdResponse" />
+  </wsdl:message>
+  <wsdl:message name="startStandbyIn">
+    <wsdl:part name="parameters" element="tns:startStandby" />
+  </wsdl:message>
+  <wsdl:message name="startStandbyOut">
+    <wsdl:part name="startStandbyResponse" element="tns:startStandbyResponse" />
+  </wsdl:message>
+  <wsdl:message name="getStandbyDurationIn">
+    <wsdl:part name="parameters" element="tns:getStandbyDuration" />
+  </wsdl:message>
+  <wsdl:message name="getStandbyDurationOut">
+    <wsdl:part name="getStandbyDurationResponse" element="tns:getStandbyDurationResponse" />
+  </wsdl:message>
+  <wsdl:portType name="CellTestIntegrationService">
+    <wsdl:operation name="getCellListByTrayId" parameterOrder="parameters">
+      <wsdl:input message="tns:getCellListByTrayIdIn" />
+      <wsdl:output message="tns:getCellListByTrayIdOut" />
+    </wsdl:operation>
+    <wsdl:operation name="getOcvType" parameterOrder="parameters">
+      <wsdl:input message="tns:getOcvTypeIn" />
+      <wsdl:output message="tns:getOcvTypeOut" />
+    </wsdl:operation>
+    <wsdl:operation name="isFormationReady" parameterOrder="parameters">
+      <wsdl:input message="tns:isFormationReadyIn" />
+      <wsdl:output message="tns:isFormationReadyOut" />
+      <wsdl:fault name="CellTestIntegrationException" message="tns:isFormationReadyFault" />
+    </wsdl:operation>
+    <wsdl:operation name="completeStandby" parameterOrder="parameters">
+      <wsdl:input message="tns:completeStandbyIn" />
+      <wsdl:output message="tns:completeStandbyOut" />
+      <wsdl:fault name="CellTestIntegrationException" message="tns:completeStandbyFault" />
+    </wsdl:operation>
+    <wsdl:operation name="getChannelStatus" parameterOrder="parameters">
+      <wsdl:input message="tns:getChannelStatusIn" />
+      <wsdl:output message="tns:getChannelStatusOut" />
+    </wsdl:operation>
+    <wsdl:operation name="getProcessFilePathByTrayId" parameterOrder="parameters">
+      <wsdl:input message="tns:getProcessFilePathByTrayIdIn" />
+      <wsdl:output message="tns:getProcessFilePathByTrayIdOut" />
+      <wsdl:fault name="CellTestIntegrationException" message="tns:getProcessFilePathByTrayIdFault" />
+    </wsdl:operation>
+    <wsdl:operation name="postICResult" parameterOrder="parameters">
+      <wsdl:input message="tns:postICResultIn" />
+      <wsdl:output message="tns:postICResultOut" />
+    </wsdl:operation>
+    <wsdl:operation name="postAGResult" parameterOrder="parameters">
+      <wsdl:input message="tns:postAGResultIn" />
+      <wsdl:output message="tns:postAGResultOut" />
+      <wsdl:fault name="CellTestIntegrationException" message="tns:postAGResultFault" />
+    </wsdl:operation>
+    <wsdl:operation name="postOCVResult" parameterOrder="parameters">
+      <wsdl:input message="tns:postOCVResultIn" />
+      <wsdl:output message="tns:postOCVResultOut" />
+    </wsdl:operation>
+    <wsdl:operation name="completeOCV" parameterOrder="parameters">
+      <wsdl:input message="tns:completeOCVIn" />
+      <wsdl:output message="tns:completeOCVOut" />
+    </wsdl:operation>
+    <wsdl:operation name="removeCellFromTrayId" parameterOrder="parameters">
+      <wsdl:input message="tns:removeCellFromTrayIdIn" />
+      <wsdl:output message="tns:removeCellFromTrayIdOut" />
+      <wsdl:fault name="CellTestIntegrationException" message="tns:removeCellFromTrayIdFault" />
+    </wsdl:operation>
+    <wsdl:operation name="getCellTestResultByTrayId" parameterOrder="parameters">
+      <wsdl:input message="tns:getCellTestResultByTrayIdIn" />
+      <wsdl:output message="tns:getCellTestResultByTrayIdOut" />
+    </wsdl:operation>
+    <wsdl:operation name="completeFormation" parameterOrder="parameters">
+      <wsdl:input message="tns:completeFormationIn" />
+      <wsdl:output message="tns:completeFormationOut" />
+    </wsdl:operation>
+    <wsdl:operation name="releaseTrayId" parameterOrder="parameters">
+      <wsdl:input message="tns:releaseTrayIdIn" />
+      <wsdl:output message="tns:releaseTrayIdOut" />
+    </wsdl:operation>
+    <wsdl:operation name="startStandby" parameterOrder="parameters">
+      <wsdl:input message="tns:startStandbyIn" />
+      <wsdl:output message="tns:startStandbyOut" />
+    </wsdl:operation>
+    <wsdl:operation name="getStandbyDuration" parameterOrder="parameters">
+      <wsdl:input message="tns:getStandbyDurationIn" />
+      <wsdl:output message="tns:getStandbyDurationOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" name="CellTestIntegrationServiceBinding" type="tns:CellTestIntegrationService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="getCellListByTrayId">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getOcvType">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="isFormationReady">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="CellTestIntegrationException">
+        <soap:fault use="literal" name="CellTestIntegrationException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="completeStandby">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="CellTestIntegrationException">
+        <soap:fault use="literal" name="CellTestIntegrationException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getChannelStatus">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getProcessFilePathByTrayId">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="CellTestIntegrationException">
+        <soap:fault use="literal" name="CellTestIntegrationException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="postICResult">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="postAGResult">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="CellTestIntegrationException">
+        <soap:fault use="literal" name="CellTestIntegrationException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="postOCVResult">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="completeOCV">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="removeCellFromTrayId">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+      <wsdl:fault name="CellTestIntegrationException">
+        <soap:fault use="literal" name="CellTestIntegrationException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getCellTestResultByTrayId">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="completeFormation">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="releaseTrayId">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="startStandby">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getStandbyDuration">
+      <soap:operation soapAction="" />
+      <wsdl:input>
+        <soap:body use="literal" parts="parameters" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="CellTestIntegrationServiceService">
+    <wsdl:port name="CellTestIntegrationServicePort" binding="tns:CellTestIntegrationServiceBinding">
+      <address location="http://ndmesq051.CATLbattery.com:50000/atlmeswebservice/CellTestIntegrationServiceService" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
