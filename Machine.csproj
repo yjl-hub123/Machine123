@@ -392,6 +392,7 @@
     <EmbeddedResource Include="UI\WaterContentPage.resx">
       <DependentUpon>WaterContentPage.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="bin0911.7z" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
