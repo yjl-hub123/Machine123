@@ -38,7 +38,7 @@ namespace Machine
 
         // 【IO/电机】
         private int OTransferMotor;             // 转移电机
-        private int IOffloadCheck;              // 出口下料检查
+        public int IOffloadCheck;              // 出口下料检查
         private int IMidPos;                    // 中间位检查
         private int IPlaceCheck;                // 放料检查
         private int IManualBtn;                 // 输出按钮
@@ -365,7 +365,21 @@ namespace Machine
 
         #endregion
 
-
+        public override void SystemWaitTime()
+        {
+            MCState mcState = MachineCtrl.GetInstance().RunsCtrl.GetMCState();
+            if (MCState.MCRunning == mcState)
+            {
+                if (AutoSteps.Auto_WaitWorkStart == (AutoSteps)nextAutoStep
+                    && InputState(IOffloadCheck, true))
+                {
+                    if (MachineCtrl.GetInstance().nWaitPickNGBat == DateTime.MaxValue)
+                        MachineCtrl.GetInstance().nWaitPickNGBat = DateTime.Now;
+                }
+                else if (MachineCtrl.GetInstance().nWaitPickNGBat != DateTime.MaxValue)
+                    MachineCtrl.GetInstance().nWaitPickNGBat = DateTime.MaxValue;
+            }
+        }
         /// <summary>
         /// 空行检查
         /// </summary>

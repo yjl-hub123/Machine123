@@ -3362,7 +3362,11 @@ namespace Machine
                 {
                     MachineCtrl.GetInstance().nWaitOffLineTime++;
                     MachineCtrl.GetInstance().SaveProduceCount();
+                    if (MachineCtrl.GetInstance().nWaitOffLine == DateTime.MaxValue)
+                        MachineCtrl.GetInstance().nWaitOffLine = DateTime.Now;
                 }
+                else if (MachineCtrl.GetInstance().nWaitOffLine != DateTime.MaxValue)
+                    MachineCtrl.GetInstance().nWaitOffLine = DateTime.MaxValue;
             }
         }
         #endregion

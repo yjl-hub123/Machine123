@@ -875,7 +875,11 @@ namespace Machine
                 {
                     MachineCtrl.GetInstance().nWaitOnlLineTime++;
                     MachineCtrl.GetInstance().SaveProduceCount();
+                    if (MachineCtrl.GetInstance().nWaitOnlLine == DateTime.MaxValue)
+                        MachineCtrl.GetInstance().nWaitOnlLine = DateTime.Now;
                 }
+                else if (MachineCtrl.GetInstance().nWaitOnlLine != DateTime.MaxValue)
+                    MachineCtrl.GetInstance().nWaitOnlLine = DateTime.MaxValue;
             }
         }
 

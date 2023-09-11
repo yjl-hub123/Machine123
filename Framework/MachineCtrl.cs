@@ -38,9 +38,11 @@ namespace Machine
         private Task taskWCThread;                  // 水含量线程
         private bool bIsRunWCThread;                // 水含量指示线程运行
         private DateTime towerStartTime;            // 灯塔开始时间
+        private DateTime towerStartFlashTime;       // 灯塔开始闪烁时间
         public DataBaseRecord dbRecord;             // 数据库
         public int machineID;                       // 设备ID
         public bool OverOrder;                      // 主界面顺序 
+        public bool sqlLineUpload;                  // 拉线报警上传到数据库
 
         public MysqlClient Mysql { get; } = new MysqlClient();
         private Task lineInfoUpdate;
@@ -88,7 +90,7 @@ namespace Machine
         private bool useMesPrarm;                   // 使用MES参数
         private int pltMaxRow;                      // 托盘最大行
         private int pltMaxCol;                      // 托盘最大列
-        public string sLineNum;                     // 拉线
+        public string sLineNum;                    // 拉线
         private bool reOvenWait;                    // 回炉选择
         private int productFormula;                 // 产品配方
         public int nStayOvenOutTime;                // 电池入炉开始烘烤后，停留时间超过设定小时后区分显示         
@@ -105,6 +107,9 @@ namespace Machine
         public int m_nNgTotal;                      // NG数量
         public int nWaitOnlLineTime;                // 等待上料物流线时间
         public int nWaitOffLineTime;                // 等待下料物流线时间
+        public DateTime nWaitOnlLine;               // 等待上料物流线
+        public DateTime nWaitPickNGBat;              // 等待上料物流线
+        public DateTime nWaitOffLine;               // 等待下料物流线
         public int nAlarmTime;                      // 报警时间
         public int nMCRunningTime;                  // 运行时间
         public int nMCStopRunTime;                  // 停机时间
@@ -327,6 +332,7 @@ namespace Machine
             this.useMesPrarm = true;
             this.dataRecover = true;
             this.bSampleSwitch = false;
+            this.sqlLineUpload = true;
 
             this.nMaxWaitOffFloorCount = 5;
             this.nStayOvenOutTime = 24;
@@ -335,6 +341,7 @@ namespace Machine
             this.nHintTime = 1;
             InsertPrivateParam("UpdataMES", "上传MES数据", "TRUE:上传MES；FALSE:不上传MES", updataMES, RecordType.RECORD_BOOL);
             InsertPrivateParam("UseMesPrarm", "使用MES参数", "TRUE:上传MES；FALSE:不上传MES", useMesPrarm, RecordType.RECORD_BOOL);
+            InsertPrivateParam("SqlLineUpload", "拉线报警信息上传到数据库", "TRUE:上传；FALSE:不上传", sqlLineUpload, RecordType.RECORD_BOOL);
             InsertPrivateParam("DataRecover", "数据恢复", "TRUE:初始化时恢复数据；FALSE:清除旧数据，不恢复", dataRecover, RecordType.RECORD_BOOL);
             InsertPrivateParam("PalletMaxRow", "托盘最大行", "托盘最大行数 >0", pltMaxRow, RecordType.RECORD_INT);
             InsertPrivateParam("PalletMaxCol", "托盘最大列", "托盘最大列数 >0", pltMaxCol, RecordType.RECORD_INT);
@@ -404,14 +411,15 @@ namespace Machine
                 foreach (var name in monitorLineInfo)
                 {
                     var LineInfo = Mysql.Select<HistoryTable>($"select * from {nameof(HistoryTable)} where {nameof(HistoryTable.Line)} = '{name}'");
-                    if (monitrLineData.TryGetValue(name, out var listinfo))
+                    lock (monitrLineData)
                     {
-                        listinfo.Clear();
-                        listinfo.AddRange(LineInfo);
+                        if (monitrLineData.TryGetValue(name, out var listinfo))
+                        {
+                            monitrLineData[name] = LineInfo.ToList();
+                        }
+                        else
+                            monitrLineData.Add(name, LineInfo.ToList());
                     }
-                    else
-
-                        monitrLineData.Add(name, LineInfo.ToList());
                 }
 
                 Thread.Sleep(100);
@@ -424,7 +432,7 @@ namespace Machine
         /// <returns></returns>
         public bool DataBaseReset()
         {
-            if (Mysql.IsOpen())
+            if (sqlLineUpload && Mysql.IsOpen())
             {
                 Mysql.CustomDBQuery($"DELETE FROM {nameof(HistoryTable)} where {nameof(HistoryTable.Line)} = '{sLineNum}'");
                 return true;
@@ -949,6 +957,7 @@ namespace Machine
             this.wcserverIP = IniFile.ReadString("Parameter", "wcserverIP", this.wcserverIP, Def.GetAbsPathName(Def.MachineCfg));
             this.UseMesPrarm = IniFile.ReadBool("Parameter", "UseMesPrarm", true, Def.GetAbsPathName(Def.MachineCfg));
             this.UpdataMES = IniFile.ReadBool("Parameter", "UpdataMES", true, Def.GetAbsPathName(Def.MachineCfg));
+            this.sqlLineUpload = IniFile.ReadBool("Parameter", "SqlLineUpload", true, Def.GetAbsPathName(Def.MachineCfg));
             this.DataRecover = IniFile.ReadBool("Parameter", "DataRecover", true, Def.GetAbsPathName(Def.MachineCfg));
             this.nMaxWaitOffFloorCount = IniFile.ReadInt("Parameter", "MaxWaitOffFloorCount", this.nMaxWaitOffFloorCount, Def.GetAbsPathName(Def.MachineCfg));
             this.bSampleSwitch = IniFile.ReadBool("Parameter", "SampleSwitch", false, Def.GetAbsPathName(Def.MachineCfg));
@@ -1621,7 +1630,7 @@ namespace Machine
             RunProOnloadRobot onloadRobot = GetModule(RunID.OnloadRobot) as RunProOnloadRobot;
             RunProOffloadRobot offloadRobot = GetModule(RunID.OffloadRobot) as RunProOffloadRobot;
             RunProTransferRobot transferRobot = GetModule(RunID.Transfer) as RunProTransferRobot;
-
+            RunProOnloadNG onloadNG = GetModule(RunID.OnloadNG) as RunProOnloadNG;
             // 灯塔状态
             int towerCount = (int)SystemIOGroup.LightTower;
             MCState mcState = this.RunsCtrl.GetMCState();
@@ -1660,7 +1669,14 @@ namespace Machine
             // 初始化中、运行中
             else if (MCState.MCInitializing == mcState || MCState.MCRunning == mcState)
             {
-                for (int nIdx = 0; nIdx < towerCount; nIdx++)
+                if (DateTime.Now.Subtract(nWaitOnlLine).TotalMinutes >= 3 && (DateTime.Now - towerStartFlashTime).TotalMilliseconds >= 500.0)
+                    MachineCtrl.GetInstance().FlashingGreen(2);
+                else if(InputState(onloadNG.IOffloadCheck, true) && (DateTime.Now - towerStartFlashTime).TotalMilliseconds >= 500.0)
+                    MachineCtrl.GetInstance().FlashingYellow(2);
+                else if (DateTime.Now.Subtract(nWaitOffLine).TotalMinutes >= 3 && (DateTime.Now - towerStartFlashTime).TotalMilliseconds >= 500.0)
+                    MachineCtrl.GetInstance().FlashingYellow(2);
+                else
+                    for (int nIdx = 0; nIdx < towerCount; nIdx++)
                 {
                     OutputAction(OLightTowerRed[nIdx], false);
                     OutputAction(OLightTowerYellow[nIdx], false);
@@ -2151,7 +2167,51 @@ namespace Machine
         #endregion
 
         #endregion
+        #region 灯控
 
+        //绿灯闪烁(三色灯)
+        public void FlashingGreen(int towerCount)
+        {
+            bool bState = OutputState(OLightTowerGreen[0], true);
+
+            for (int nIdx = 0; nIdx < towerCount; nIdx++)
+            {
+                OutputAction(OLightTowerRed[nIdx], false);
+                OutputAction(OLightTowerYellow[nIdx], false);
+                OutputAction(OLightTowerGreen[nIdx], !bState);
+                OutputAction(OLightTowerBuzzer[nIdx], false);
+            }
+            towerStartFlashTime = DateTime.Now;
+        }
+
+
+        //黄灯闪烁(三色灯)
+        public void FlashingYellow(int towerCount)
+        {
+            bool bState = OutputState(OLightTowerYellow[0], true);
+
+            for (int nIdx = 0; nIdx < towerCount; nIdx++)
+            {
+                OutputAction(OLightTowerRed[nIdx], false);
+                OutputAction(OLightTowerGreen[nIdx], false);
+                OutputAction(OLightTowerYellow[nIdx], !bState);
+                OutputAction(OLightTowerBuzzer[nIdx], false);
+            }
+            towerStartFlashTime = DateTime.Now;
+        }
+
+        public void FlashingRed(int towerCount)
+        {
+            for (int nIdx = 0; nIdx < towerCount; nIdx++)
+            {
+                OutputAction(OLightTowerGreen[nIdx], false);
+                OutputAction(OLightTowerYellow[nIdx], false);
+                OutputAction(OLightTowerRed[nIdx], true);
+                OutputAction(OLightTowerBuzzer[nIdx], true);
+            }
+        }
+
+        #endregion
 
         #region // 数据统计
 
