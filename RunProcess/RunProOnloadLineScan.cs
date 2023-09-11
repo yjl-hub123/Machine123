@@ -316,7 +316,7 @@ namespace Machine
                                     string strMsg, strDisp;
                                     strMsg = "扫码位检测不到电芯！";
                                     strDisp = "请检查来料线扫码位是否有电芯";
-                                    ShowMessageBox(GetRunID() * 100 + 0, strMsg, strDisp, MessageType.MsgAlarm);
+                                    ShowMessageBox(GetRunID() * 100 + 0, strMsg, strDisp, MessageType.MsgWarning);
                                     break;
                                 }
 

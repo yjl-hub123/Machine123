@@ -789,7 +789,8 @@ namespace Machine
             else
             {
                 OutputAction(nCurRecvGroup == 0 ? OTransferMotor1 : OTransferMotor2, false);
-                ShowMsgBox.ShowDialog("接收电池过程超时，请检查后重试", MessageType.MsgAlarm);
+                //ShowMsgBox.ShowDialog("接收电池过程超时，请检查后重试", MessageType.MsgAlarm);
+                ShowMessageBox(GetRunID() * 100 + 1, "接收电池过程超时", "请检查来料取料线有料感应是否正常", MessageType.MsgAlarm);
             }
 
             // 检测到连料感应器

@@ -254,6 +254,7 @@ namespace Machine
                             if (!InputState(IMidPos, false))
                             {
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
+                                RecordMessageInfo("假电池连料", MessageType.MsgAlarm);
                                 ShowMessageBox(GetRunID() * 100 + 0, "假电池连料", "请检查电池是否到位或者感应器是否正常", MessageType.MsgWarning);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
 

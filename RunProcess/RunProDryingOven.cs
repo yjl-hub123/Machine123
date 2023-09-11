@@ -641,6 +641,7 @@ namespace Machine
                             string strErr = "";
                             if (!DryRun && !OvenIsConnect())
                             {
+                                RecordMessageInfo("炉子未连接异常", MessageType.MsgAlarm);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
                                 ShowMessageBox(GetRunID() * 100 + 10, "炉子未连接，水含量上传失败！！！", "请检查干燥炉通讯是否正常", MessageType.MsgWarning);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
@@ -1070,6 +1071,7 @@ namespace Machine
                                     strDisp = "请停机检查炉腔中夹具状态！";
                                     strMsg = string.Format("{0}层{1}列炉腔中检测到{2}夹具，实际应该{3}夹具", nCurOperatRow + 1, nCurOperatCol + 1, strPlt, strData);
                                     OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
+                                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                                     ShowMessageBox(GetRunID() * 100 + 0, strMsg, strDisp, MessageType.MsgWarning);
                                     OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
                                     break;
@@ -1170,6 +1172,7 @@ namespace Machine
                                 strData = bHasData ? "有" : "无";
                                 strDisp = "请停机检查炉腔中夹具状态！";
                                 strMsg = string.Format("{0}层{1}列炉腔中检测到{2}夹具，实际应该{3}夹具", nCurOperatRow + 1, nCurOperatCol + 1, strPlt, strData);
+                                RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
                                 ShowMessageBox(GetRunID() * 100 + 60, strMsg, strDisp, MessageType.MsgWarning);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
@@ -1298,8 +1301,10 @@ namespace Machine
                             {
                                 setCavityData[nCurOperatRow].WorkState = OvenWorkState.Stop;
                                 OvenStartOperate(nCurOperatRow, setCavityData[nCurOperatRow]);
+                                string strMsg = "MES异常！！！请在D盘MesLog文件中查看具体报警代码信息 ";
+                                RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
-                                ShowMessageBox(GetRunID() * 100 + 61, strErr, "MES异常！！！请在D盘MesLog文件中查看具体报警代码信息 ", MessageType.MsgWarning);
+                                ShowMessageBox(GetRunID() * 100 + 61, strErr, strMsg, MessageType.MsgWarning);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
                                 bOvenEnable[nCurOperatRow] = false;                     // Mes托盘开始失败设置为禁用状态
                                 SetCurOvenRest("Mes托盘开始异常报警", nCurOperatRow);
@@ -2268,7 +2273,9 @@ namespace Machine
                 if (bCurConnectState)
                 {
                     bCurConnectState = false;
-                    ShowMessageBox(GetRunID() * 100 + 1, "通讯连接已断开！！！", "请检查干燥炉通讯是否正常", MessageType.MsgWarning);
+                    string strMsg = "通讯连接已断开！！！";
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
+                    ShowMessageBox(GetRunID() * 100 + 1, strMsg, "请检查干燥炉通讯是否正常", MessageType.MsgWarning);
                 }
                 return;
             }
@@ -2294,6 +2301,7 @@ namespace Machine
                 if (OvenBlowAlarm.Alarm == bgCavityData[nCavityIdx].BlowAlarm && bOvenEnable[nCavityIdx])
                 {
                     string msg = string.Format("{0}层破真空异常报警", nCavityIdx + 1);
+                    RecordMessageInfo("氮气加热异常报警", MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 5, msg, "请查看干燥炉真空状态是否正常", MessageType.MsgWarning,10, DialogResult.OK);
                     bOvenEnable[nCavityIdx] = false;                     // 设置为禁用状态
                     SetCurOvenRest("破真空异常报警", nCavityIdx);
@@ -2345,6 +2353,7 @@ namespace Machine
                         }
                         SetCavityState(nCavityIdx, CavityState.Standby);
                         SaveRunData(SaveType.Variables);
+                        RecordMessageInfo(strAlarmInfo, MessageType.MsgAlarm);
                         ShowMessageBox(GetRunID() * 100 + 4, strAlarmInfo, "请查看干燥炉真空或真空泵状态是否正常", MessageType.MsgWarning, 10, DialogResult.OK);
                     }
                     // 预热呼吸排队异常
@@ -2368,6 +2377,7 @@ namespace Machine
                             }
                             SetCavityState(nCavityIdx, CavityState.Standby);
                             SaveRunData(SaveType.Variables);
+                            RecordMessageInfo(strAlarmInfo, MessageType.MsgAlarm);
                             ShowMessageBox(GetRunID() * 100 + 2, strAlarmInfo, "请查看干燥炉真空或真空泵状态是否正常", MessageType.MsgWarning, 10, DialogResult.OK);
                         }
                     }
@@ -2385,7 +2395,7 @@ namespace Machine
                     {
                         strAlarmInfo = string.Format("干燥炉{0}\r\n第{1}层破真空异常报警", nOvenID + 1, nCavityIdx + 1);
                         MachineCtrl.GetInstance().WriteLog(strAlarmInfo);
-                        RecordMessageInfo(strAlarmInfo, MessageType.MsgWarning);
+                        RecordMessageInfo(strAlarmInfo, MessageType.MsgAlarm);
                         bOvenEnable[nCavityIdx] = false;                     // 设置为禁用状态
                         SetCurOvenRest("破真空异常报警", nCavityIdx);
                         MesmiCloseNcAndProcess(nCavityIdx);
@@ -2406,7 +2416,7 @@ namespace Machine
                         && CheckTempAlarm(nCavityIdx, bgCavityData[nCavityIdx], ref strAlarmInfo))
                     {
                         nBakingType[nCavityIdx] = (int)BakingType.Rebaking;
-                        RecordMessageInfo(strAlarmInfo, MessageType.MsgWarning);
+                        RecordMessageInfo(strAlarmInfo, MessageType.MsgAlarm);
                         MesmiCloseNcAndProcess(nCavityIdx);
                         SetCavityState(nCavityIdx, CavityState.Standby);
                         SaveRunData(SaveType.Variables);
@@ -2418,7 +2428,7 @@ namespace Machine
                     {
                         strAlarmInfo = string.Format("干燥炉{0}\r\n第{1}层真空呼吸异常报警", nOvenID + 1, nCavityIdx + 1);
                         MachineCtrl.GetInstance().WriteLog(strAlarmInfo);
-                        RecordMessageInfo(strAlarmInfo, MessageType.MsgWarning);
+                        RecordMessageInfo(strAlarmInfo, MessageType.MsgAlarm);
                         bOvenEnable[nCavityIdx] = false;                     // 设置为禁用状态
                         SetCurOvenRest("真空呼吸异常报警", nCavityIdx);
                         MesmiCloseNcAndProcess(nCavityIdx);
@@ -2440,7 +2450,7 @@ namespace Machine
                     {
                         string msg = string.Format("干燥炉{0}\r\n第{1}层真空值小于100pa时常偏低异常报警,\n是：炉腔将进行重烤。\n否：炉腔将进行重烤", nOvenID + 1, nCavityIdx + 1);
                         MachineCtrl.GetInstance().WriteLog(msg);
-                        RecordMessageInfo(msg, MessageType.MsgWarning);
+                        RecordMessageInfo(msg, MessageType.MsgAlarm);
                         bOvenEnable[nCavityIdx] = false;                     // 设置为禁用状态
                         SetCurOvenRest("真空值100pa以下时间异常报警", nCavityIdx);
                         MesmiCloseNcAndProcess(nCavityIdx);
@@ -2502,6 +2512,7 @@ namespace Machine
                                     if (!DryRun && !OvenPressureOperate(nCavityIdx, setCavityData[nCavityIdx], false))
                                     {
                                         strAlarmInfo = string.Format("干燥炉{0}\r\n第{1}层保压{2}失败", nOvenID + 1, nCavityIdx + 1, bPressure[nCavityIdx] ? "打开" : "关闭");
+                                        RecordMessageInfo(strAlarmInfo, MessageType.MsgAlarm);
                                         ShowMessageBox(GetRunID() * 100 + 3, strAlarmInfo, "请查看干燥炉状态是否正常", MessageType.MsgWarning, 10, DialogResult.OK);
 
                                     }
@@ -2513,6 +2524,7 @@ namespace Machine
                                     MesmiCloseNcAndProcess(nCavityIdx);
                                     SetCavityState(nCavityIdx, CavityState.Standby);
                                     SaveRunData(SaveType.Variables);
+                                    RecordMessageInfo("真空小于100PA时间低于标准值！！！", MessageType.MsgAlarm);
                                     ShowMessageBox(GetRunID() * 100 + 5, "真空小于100PA时间低于标准值！！！", "请查看参数或检查单体炉", MessageType.MsgWarning, 10, DialogResult.OK);
                                 }
                             }
@@ -2522,6 +2534,7 @@ namespace Machine
                                 nBakingType[nCavityIdx] = (int)BakingType.Invalid;
                                 bOvenEnable[nCavityIdx] = false;                    
                                 SetCurOvenRest("烘烤结束异常，请在历史报警记录查看具体信息", nCavityIdx);
+                                RecordMessageInfo("烘烤结束异常", MessageType.MsgAlarm);
                                 MesmiCloseNcAndProcess(nCavityIdx);
                                 SetCavityState(nCavityIdx, CavityState.Standby);
                                 SaveRunData(SaveType.Variables);
@@ -2862,6 +2875,7 @@ namespace Machine
                     strDisp = "请检查干燥炉炉门状态";
                     strMsg = string.Format("{0}层炉门{1}超时", nIndex + 1, bOpen ? "打开" : "关闭");
                     OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 62, strMsg, strDisp, MessageType.MsgWarning, 10);
                     OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
                 }
@@ -2900,6 +2914,7 @@ namespace Machine
                     bool bOpen = (OvenVacState.Open == data.VacState);
                     strDisp = "请检查干燥炉抽真空阀状态";
                     strMsg = string.Format("{0}层真空阀{1}超时", nIndex + 1, bOpen ? "打开" : "关闭");
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 19, strMsg, strDisp, MessageType.MsgWarning);
                 }
             }
@@ -2936,6 +2951,7 @@ namespace Machine
                     bool bOpen = (OvenBlowState.Open == data.BlowState);
                     strDisp = "请检查干燥炉破真空阀状态";
                     strMsg = string.Format("{0}层破真空阀{1}超时", nIndex + 1, bOpen ? "打开" : "关闭");
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 20, strMsg, strDisp, MessageType.MsgWarning);
                 }
             }
@@ -2960,6 +2976,7 @@ namespace Machine
                     bool bOpen = (OvenPressureState.Open == data.PressureState);
                     strDisp = "请检查干燥炉保压状态";
                     strMsg = string.Format("{0}层保压{1}失败", nIndex + 1, bOpen ? "打开" : "关闭");
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 21, strMsg, strDisp, MessageType.MsgWarning);
                 }
                 return false;
@@ -3023,6 +3040,7 @@ namespace Machine
                     bool bOpen = (OvenPreHeatBreathState.Open == data.PreHeatBreathState1);
                     strDisp = "请检查干燥炉预热呼吸状态";
                     strMsg = string.Format("{0}层预热呼吸{1}超时", nIndex + 1, bOpen ? "打开" : "关闭");
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 23, strMsg, strDisp, MessageType.MsgWarning);
                 }
             }
@@ -3059,6 +3077,7 @@ namespace Machine
                     bool bOpen = (OvenVacBreathState.Open == data.VacBreathState);
                     strDisp = "请检查干燥真空呼吸状态";
                     strMsg = string.Format("{0}层真空呼吸{1}超时", nIndex + 1, bOpen ? "打开" : "关闭");
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 24, strMsg, strDisp, MessageType.MsgWarning);
                 }
             }
@@ -3167,6 +3186,7 @@ namespace Machine
                     strDisp = "请在干燥炉本地查看故障报警状态";
                     strMsg = string.Format("{0}层{1}超时", nIndex + 1, bOpen ? "启动" : "停止");
                     OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
+                    RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 26, strMsg, strDisp, MessageType.MsgWarning);
                     OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
                 }
@@ -3192,6 +3212,7 @@ namespace Machine
             {
                 strDisp = "干燥炉工作中";
                 strMsg = string.Format("{0}层炉腔禁止参数设置", nIndex + 1);
+                RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                 ShowMessageBox(GetRunID() * 100 + 0, strMsg, strDisp, MessageType.MsgWarning);
                 return false;
             }
@@ -3337,6 +3358,7 @@ namespace Machine
                 bool bHas = (OvenPalletState.Have == pltState);
                 strDisp = "请检查干燥炉托盘状态或查看调度步骤信息（是否操作正确）";
                 strMsg = string.Format("调度检查{0}层{1}#托盘超时", nRowIdx + 1, nColIdx + 1);
+                RecordMessageInfo(strMsg, MessageType.MsgAlarm);
                 ShowMessageBox(GetRunID() * 100 + 28, strMsg, strDisp, MessageType.MsgAlarm);
             }
             return false;

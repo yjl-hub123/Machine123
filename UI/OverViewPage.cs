@@ -195,7 +195,7 @@ namespace Machine
             // g.DrawRectangle(pen, rcFrame);
             //模组整体位置顺序切换
             float[] IOrderRecLowerXPos = { 0.0f, 28.0f, 73.0f };    //下排模组图形X位置
-            float[] IOrderRecUpperXPos = { 0.0f, 12.0f, 90.0f };    //上排模组图形X位置
+            float[] IOrderRecUpperXPos = { 0.0f, 12.0f, 87.5f, 95.0f };    //上排模组图形X位置
             float IOrderRecRobotCurXPos;
             bOrder = MachineCtrl.GetInstance().OverOrder;
             if (bOrder)
@@ -203,8 +203,9 @@ namespace Machine
                 Array.Reverse(IOrderRecLowerXPos);  //73,28,0
                 //Array.Reverse(IOrderRecUpperXPos);
                 IOrderRecUpperXPos[0] = 0.0f;
-                IOrderRecUpperXPos[1] = 23.0f;
-                IOrderRecUpperXPos[2] = 12.0f;
+                IOrderRecUpperXPos[1] = 25.0f;
+                IOrderRecUpperXPos[2] = 17.5f;
+                IOrderRecUpperXPos[3] = 11.5f;
                 IOrderRecRobotCurXPos = 12.0f;
             }
             else
@@ -230,14 +231,19 @@ namespace Machine
             DrawOvenGroup1(g, pen, rcArea);
 
             // 干燥炉组0
-            rcArea = new Rectangle((int)(rcFrame.X + fFrameAvgW * IOrderRecUpperXPos[1]), (int)(rcFrame.Y), (int)(fFrameAvgW * 77.0), (int)(fFrameAvgH * 35.0));
+            rcArea = new Rectangle((int)(rcFrame.X + fFrameAvgW * IOrderRecUpperXPos[1]), (int)(rcFrame.Y), (int)(fFrameAvgW * 75.0), (int)(fFrameAvgH * 35.0));
             g.DrawRectangle(pen, rcArea);
             DrawOvenGroup0(g, pen, rcArea);
 
             // 托盘缓存架
-            rcArea = new Rectangle((int)(rcFrame.X + fFrameAvgW * IOrderRecUpperXPos[2]), (int)(rcFrame.Y), (int)(fFrameAvgW * 10.0), (int)(fFrameAvgH * 35.0));
+            rcArea = new Rectangle((int)(rcFrame.X + fFrameAvgW * IOrderRecUpperXPos[2]), (int)(rcFrame.Y), (int)(fFrameAvgW * 7.0), (int)(fFrameAvgH * 35.0));
             g.DrawRectangle(pen, rcArea);
             DrawPalletBuf(g, pen, rcArea);
+
+            // 拉线报警信息状态
+            rcArea = new Rectangle((int)(rcFrame.X + fFrameAvgW * IOrderRecUpperXPos[3]), (int)(rcFrame.Y), (int)(fFrameAvgW * 5), (int)(fFrameAvgH * 35.0));
+            g.DrawRectangle(pen, rcArea);
+            DrawLineInfo(g, pen, ref rcArea);
 
             // 调度
             rcArea = new Rectangle((int)(rcFrame.X + fFrameAvgW * 0.0), (int)(rcFrame.Y + fFrameAvgH * 50.0), (int)(fFrameAvgW * 100), (int)(fFrameAvgH * 12));
@@ -263,6 +269,7 @@ namespace Machine
             rcArea = new Rectangle((int)(rcFrame.X + (fFrameAvgW * IOrderRecRobotCurXPos)), (int)(rcFrame.Y + (fFrameAvgH * 36.0)), (int)(fFrameAvgW * 77), (int)(fFrameAvgH * 13.0));
             //g.DrawRectangle(pen, rcArea);
             DrawRobotCurPos(g, pen, rcArea);
+            DrawLineAlarmInfoPos(g, pen, rcArea);
 
             //通讯显示
             rcArea = new Rectangle((int)(rcFrame.X + (int)(fFrameAvgW * 55)), (int)(rcFrame.Y + (fFrameAvgH * 36.0)), (int)(fFrameAvgW * 45), (int)(fFrameAvgH * 13.0));
@@ -1616,6 +1623,45 @@ namespace Machine
         }
 
         /// <summary>
+        /// 拉线报警信息状态
+        /// </summary>
+        /// <param name="g"></param>
+        /// <param name="pen"></param>
+        /// <param name="rect"></param>
+        private void DrawLineInfo(Graphics g, Pen pen, ref Rectangle rect)
+        {
+            var Clrt = MachineCtrl.GetInstance();
+            var drawRect = new Rectangle((int)(rect.X + rect.Width * 0.1), (int)(rect.Y + rect.Height * 0.05), (int)(rect.Width * 0.8), (int)(rect.Height * 0.9));
+            g.DrawRectangle(pen, drawRect);
+            for (int i = 0; i < Clrt.monitorLineInfo.Count; i++)
+            {
+                var Rect = new Rectangle
+                {
+                    Height = drawRect.Height / Clrt.monitorLineInfo.Count,
+                    Width = drawRect.Width,
+                    X = drawRect.X,
+                    Y = drawRect.Y + (drawRect.Height / Clrt.monitorLineInfo.Count) * i
+                };
+                g.DrawRectangle(pen, Rect);
+                Color color = default;
+                if (!Clrt.monitrLineData.TryGetValue(Clrt.monitorLineInfo[i], out var value))
+                {
+
+                    color = Color.Yellow;
+                }
+                else
+                {
+                    color = value.Count == 0 ? Color.Green : Color.Red;
+                }
+                Font font = new Font(this.Font.FontFamily, (float)10.0);
+
+                g.FillRectangle(new SolidBrush(color), Rect);
+                var stringformat = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                g.DrawString(Clrt.monitorLineInfo[i], font, Brushes.Black, Rect, stringformat);
+            }
+        }
+
+        /// <summary>
         /// 调度区
         /// </summary>
         private void DrawTransfer(Graphics g, Pen pen, Rectangle rect)
@@ -1852,7 +1898,7 @@ namespace Machine
         {
             float fAvgWid = (float)(rect.Width / 100.0);
             float fAvgHig = (float)(rect.Height / 100.0);
-            Font font = new Font(this.Font.FontFamily, (float)12.0);
+            Font font = new Font(this.Font.FontFamily, (float)11.0);
 
             RunID runID = RunID.OnloadRobot;
             RobotActionInfo info = GetRobotActionInfo(runID, false);
@@ -1864,13 +1910,13 @@ namespace Machine
             runID = RunID.Transfer;
             info = GetRobotActionInfo(runID, false);
             str = string.Format("调度机器人：{0} 工位 {1}行 {2}列 {3}", info.stationName, info.row + 1, info.col + 1, info.action.ToString());
-            nYPos = (int)(rect.Y + fAvgHig * 35);
+            nYPos = (int)(rect.Y + fAvgHig * 25);
             g.DrawString(str, font, Brushes.Black, nXPos, nYPos);
 
             runID = RunID.OffloadRobot;
             info = GetRobotActionInfo(runID, false);
             str = string.Format("下料机器人：{0} 工位 {1}行 {2}列 {3}", info.stationName, info.row + 1, info.col + 1, info.action.ToString());
-            nYPos = (int)(rect.Y + fAvgHig * 65);
+            nYPos = (int)(rect.Y + fAvgHig * 45);
             g.DrawString(str, font, Brushes.Black, nXPos, nYPos);
         }
 
@@ -1897,23 +1943,23 @@ namespace Machine
             nXPos = (int)(rect.X + fAvgWid * 15);
             nYPos = (int)(rect.Y + fAvgHig * 20);
             g.DrawString("上料机器人：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 33.0)), (int)(rect.Y + (fAvgHig * 20.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 33.0)), (int)(rect.Y + (fAvgHig * 20.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = onloadRobot.RobotIsConnect();
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
 
             nXPos = (int)(rect.X + fAvgWid * 15);
-            nYPos = (int)(rect.Y + fAvgHig * 45);
+            nYPos = (int)(rect.Y + fAvgHig * 40);
             g.DrawString("调度机器人：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 33.0)), (int)(rect.Y + (fAvgHig * 45.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 33.0)), (int)(rect.Y + (fAvgHig * 40.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = transferRobot.RobotIsConnect();
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
 
             nXPos = (int)(rect.X + fAvgWid * 15);
-            nYPos = (int)(rect.Y + fAvgHig * 70);
+            nYPos = (int)(rect.Y + fAvgHig * 60);
             g.DrawString("下料机器人：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 33.0)), (int)(rect.Y + (fAvgHig * 70.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 33.0)), (int)(rect.Y + (fAvgHig * 70.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = offloadRobot.RobotIsConnect();
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
@@ -1921,23 +1967,23 @@ namespace Machine
             nXPos = (int)(rect.X + fAvgWid * 45);
             nYPos = (int)(rect.Y + fAvgHig * 20);
             g.DrawString("来料扫码枪1：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 63.0)), (int)(rect.Y + (fAvgHig * 20.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 63.0)), (int)(rect.Y + (fAvgHig * 20.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = onloadLineScan.ScanIsConnect(0);
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
 
             nXPos = (int)(rect.X + fAvgWid * 45);
-            nYPos = (int)(rect.Y + fAvgHig * 45);
+            nYPos = (int)(rect.Y + fAvgHig * 40);
             g.DrawString("来料扫码枪2：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 63.0)), (int)(rect.Y + (fAvgHig * 45.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 63.0)), (int)(rect.Y + (fAvgHig * 45.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = onloadLineScan.ScanIsConnect(1);
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
 
             nXPos = (int)(rect.X + fAvgWid * 45);
-            nYPos = (int)(rect.Y + fAvgHig * 70);
+            nYPos = (int)(rect.Y + fAvgHig * 60);
             g.DrawString("机器人码枪：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 63.0)), (int)(rect.Y + (fAvgHig * 70.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 63.0)), (int)(rect.Y + (fAvgHig * 70.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = onloadRobot.ScanIsConnect();
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
@@ -1945,15 +1991,15 @@ namespace Machine
             nXPos = (int)(rect.X + fAvgWid * 75);
             nYPos = (int)(rect.Y + fAvgHig * 20);
             g.DrawString("MES：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 93.0)), (int)(rect.Y + (fAvgHig * 20.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 93.0)), (int)(rect.Y + (fAvgHig * 20.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = MachineCtrl.GetInstance().UpdataMES;
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
 
             nXPos = (int)(rect.X + fAvgWid * 75);
-            nYPos = (int)(rect.Y + fAvgHig * 45);
+            nYPos = (int)(rect.Y + fAvgHig * 40);
             g.DrawString("自动水含量：", font, Brushes.Black, nXPos, nYPos);
-            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 93.0)), (int)(rect.Y + (fAvgHig * 45.0)), (int)(fAvgWid * 6), (int)(fAvgHig * 15.0));
+            rcArea = new Rectangle((int)(rect.X + (fAvgWid * 93.0)), (int)(rect.Y + (fAvgHig * 45.0)), (int)(fAvgWid * 5), (int)(fAvgHig * 10.0));
             bRecv = MachineCtrl.GetInstance().m_WCClient.IsConnect();
             g.FillRectangle(bRecv ? new SolidBrush(Color.Green) : new SolidBrush(Color.Red), rcArea);
             g.DrawRectangle(pen, rcArea);
@@ -1961,6 +2007,42 @@ namespace Machine
         }
         #endregion
 
+        /// <summary>
+        /// 拉线报警信息位置
+        /// </summary>
+        private void DrawLineAlarmInfoPos(Graphics g, Pen pen, Rectangle rect)
+        {
+            float fAvgWid = (float)(rect.Width / 100.0);
+            float fAvgHig = (float)(rect.Height / 100.0);
+            Font font = new Font(this.Font.FontFamily, (float)10.0);
+            string alarmInfo = "";
+            string lineInfo = "";
+
+            var Clrt = MachineCtrl.GetInstance();
+
+            for (int i = 0; i < Clrt.monitorLineInfo.Count; i++)
+            {
+                if (Clrt.monitrLineData.TryGetValue(Clrt.monitorLineInfo[i], out var value))
+                {
+                    if (value.Count > 0)
+                    {
+                        string Info = string.Format("【{0}】- -{1}", value[0].Line, value[0].Msg);
+                        lineInfo = Info.Replace("\r\n", ",");
+                        alarmInfo += lineInfo + "\r\n";
+                    }
+                }
+            }
+
+
+            string str = "报警信息:";
+            int nXPos = (int)(rect.X);
+            int nYPos = (int)(rect.Y + fAvgHig * 80);
+            g.DrawString(str, font, Brushes.Red, nXPos, nYPos);
+
+            nXPos = (int)(rect.X + fAvgWid * 8);
+            nYPos = (int)(rect.Y + fAvgHig * 80);
+            g.DrawString(alarmInfo, font, Brushes.Red, nXPos, nYPos);
+        }
         #region // 绘制工具
 
         /// <summary>

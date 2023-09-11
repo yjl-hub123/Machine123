@@ -4601,8 +4601,8 @@ namespace Machine
                     // 特殊的检查
                     if (!oven.OvenIsConnect())
                     {
-                        strInfo = string.Format("\r\n检测到{0}连接已断开，无法查询到数据，禁止操作！", run.RunName);  
-                        
+                        strInfo = string.Format("\r\n检测到{0}连接已断开，无法查询到数据，禁止操作！", run.RunName);
+                        RecordMessageInfo("strInfo", MessageType.MsgAlarm);
                         ShowMessageBox(GetRunID() * 100 + 4, strInfo, "请检查单体炉通讯状态", MessageType.MsgMessage);
                         return false;
                     }
@@ -4611,7 +4611,7 @@ namespace Machine
                     if (oven.CurCavityData(row).ScreenState == OvenScreenState.Have)
                     {
                         strInfo = string.Format("\r\n检测到{0}第{1}层安全光幕有遮挡...严禁进行取放治具！", run.RunName, row + 1);
-
+                        RecordMessageInfo("strInfo", MessageType.MsgAlarm);
                         ShowMessageBox(GetRunID() * 100 + 5, strInfo, "请检查单体炉安全光幕状态", MessageType.MsgMessage);                        
                         return false;
                     }
@@ -4620,7 +4620,7 @@ namespace Machine
                     if (oven.CurCavityData(row).DoorState != OvenDoorState.Open)
                     {
                         strInfo = string.Format("\r\n检测到{0}第{1}层炉门关闭..严禁进行取放治具！", run.RunName, row + 1);
-
+                        RecordMessageInfo("strInfo", MessageType.MsgAlarm);
                         ShowMessageBox(GetRunID() * 100 + 6, strInfo, "请检查单体炉炉门状态", MessageType.MsgMessage);
                         return false;
                     }
@@ -4632,7 +4632,7 @@ namespace Machine
                         if (oven.CurCavityData(row + 1).DoorState != OvenDoorState.Close)
                         {
                             strInfo = string.Format("\r\n检测到{0}第{1}层炉门状态未关闭..严禁进行取放治具！", run.RunName, row + 1);
-
+                            RecordMessageInfo("strInfo", MessageType.MsgAlarm);
                             ShowMessageBox(GetRunID() * 100 + 5, strInfo, "请检查单体炉炉门状态", MessageType.MsgMessage);
                             return false;
                         }
@@ -4642,7 +4642,7 @@ namespace Machine
                     if (oven.CurCavityData(row).OnlineState != OvenOnlineState.Have)
                     {
                         strInfo = string.Format("\r\n检测到{0}第{1}层为本地状态..严禁进行取放治具！", run.RunName, row + 1);
-
+                        RecordMessageInfo("strInfo", MessageType.MsgAlarm);
                         ShowMessageBox(GetRunID() * 100 + 7, strInfo, "请检查单体炉联机状态", MessageType.MsgMessage);
                         return false;
                     }

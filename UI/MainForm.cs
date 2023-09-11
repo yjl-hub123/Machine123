@@ -1,4 +1,5 @@
 ﻿using HelperLibrary;
+using Machine.Framework.DbType;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -45,6 +46,14 @@ namespace Machine
             if (!MachineCtrl.GetInstance().dbRecord.OpenDataBase(Def.GetAbsPathName(Def.MachineMdb), ""))
             {
                 ShowMsgBox.ShowDialog("数据库打开失败，继续操作将不能保存报警及生产信息", MessageType.MsgAlarm);
+            }
+            MachineCtrl.GetInstance().Mysql.ReadIni(out var user, out var pwd, out var dbNamem, out var ip, out var port);
+
+            MachineCtrl.GetInstance().Mysql.AddTableStructure<HistoryTable>();
+
+            if (!MachineCtrl.GetInstance().Mysql.OpenDB(dbNamem, user, pwd, ip, port))
+            {
+                ShowMsgBox.ShowDialog("Mysql数据库打开失败，继续操作将不能保存报警及生产信息", MessageType.MsgAlarm);
             }
 
             MachineCtrl.GetInstance().Initialize(this.Handle);
@@ -329,6 +338,7 @@ namespace Machine
         private void buttonReset_Click(object sender, EventArgs e)
         {
             MachineCtrl.GetInstance().RunsCtrl.Reset();
+            MachineCtrl.GetInstance().DataBaseReset();
         }
 
         /// <summary>

@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading;
 using SystemControlLibrary;
 using static SystemControlLibrary.DataBaseRecord;
+using Machine.Framework.DbType;
 
 namespace Machine
 {
@@ -1021,10 +1022,16 @@ namespace Machine
         {
             try
             {
-                lock (MachineCtrl.GetInstance().lockDataBase)
-                {
-                    dbRecord.AddAlarmInfo(new AlarmFormula(productFormula, msgID, msg, msgType, runModuleID, runName, curTime));
-                }
+                dbRecord.AddAlarmInfo(new AlarmFormula(productFormula, msgID, msg, msgType, runModuleID, runName, curTime));
+
+                if (msgType > 2)
+                    MachineCtrl.GetInstance().Mysql.InsterInto(new HistoryTable()
+                    {
+                        Line = MachineCtrl.GetInstance().sLineNum,
+                        TimeOfOccurrence = DateTime.Now,
+                        Msg = msg,
+
+                    });
             }
             catch { }
         }

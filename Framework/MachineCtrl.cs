@@ -12,8 +12,8 @@ using SystemControlLibrary;
 using static SystemControlLibrary.DataBaseRecord;
 using HslCommunication.Profinet.Omron;
 using HslCommunication;
-
-
+using Machine.Framework;
+using Machine.Framework.DbType;
 
 namespace Machine
 {
@@ -42,6 +42,12 @@ namespace Machine
         public int machineID;                       // 设备ID
         public bool OverOrder;                      // 主界面顺序 
 
+        public MysqlClient Mysql { get; } = new MysqlClient();
+        private Task lineInfoUpdate;
+        public List<string> monitorLineInfo { get; } = new List<string>();
+        public Dictionary<string, List<HistoryTable>> monitrLineData { get; } = new Dictionary<string, List<HistoryTable>>();
+
+
         // 输入输出
         private int[] IStartButton;                 // 输入：启动按钮
         private int[] IStopButton;                  // 输入：停止按钮
@@ -57,6 +63,7 @@ namespace Machine
         private int[] OLightTowerGreen;             // 输出：灯塔-绿
         public int[] OLightTowerBuzzer;             // 输出：灯塔-蜂鸣器
         private int[] OHeartBeat;                   // 输出：模拟心跳
+        private int[] OLineInfoAlarm;               // 输出：拉线信息报警 声光报警器
 
         private int[] IOnloadRobotAlarm;             //输入：上料机器人碰撞报警
         private int[] ITransferRobotAlarm;           //输入：调度机器人碰撞报警
@@ -81,7 +88,7 @@ namespace Machine
         private bool useMesPrarm;                   // 使用MES参数
         private int pltMaxRow;                      // 托盘最大行
         private int pltMaxCol;                      // 托盘最大列
-        private string sLineNum;                    // 拉线
+        public string sLineNum;                     // 拉线
         private bool reOvenWait;                    // 回炉选择
         private int productFormula;                 // 产品配方
         public int nStayOvenOutTime;                // 电池入炉开始烘烤后，停留时间超过设定小时后区分显示         
@@ -288,6 +295,7 @@ namespace Machine
             this.OLightTowerGreen = new int[(int)SystemIOGroup.LightTower];
             this.OLightTowerBuzzer = new int[(int)SystemIOGroup.LightTower];
             this.OHeartBeat = new int[(int)SystemIOGroup.HeartBeat];
+            this.OLineInfoAlarm = new int[(int)SystemIOGroup.LightTower];
 
             this.ISafeDoorState = new int[(int)SystemIOGroup.SafeDoor];
             this.ISafeDoorEStop = new int[(int)SystemIOGroup.SafeDoor];
@@ -345,6 +353,7 @@ namespace Machine
             InsertPrivateParam("HintTime", "真空泵滤网维修提示日期1~28日", "默认设定日期 早晚八点提示", nHintTime, RecordType.RECORD_INT, ParameterLevel.PL_STOP_MAIN);
             
             InitProduceCount();
+            lineInfoUpdate = Task.Factory.StartNew(LineInfoUpdate, TaskCreationOptions.LongRunning);
             m_WCClient = new WaterContentClient();
             strWCInfo = "";
             ReadProduceCount();
@@ -377,6 +386,53 @@ namespace Machine
 
             ReadParameter();
         }
+
+        /// <summary>
+        /// 报警信息读取线程
+        /// </summary>
+        public void LineInfoUpdate()
+        {
+            Thread.CurrentThread.Name = "信息获取线程";
+            while (true)
+            {
+                if (!Mysql.IsOpen())
+                {
+                    Thread.Sleep(100);
+                    continue;
+                }
+
+                foreach (var name in monitorLineInfo)
+                {
+                    var LineInfo = Mysql.Select<HistoryTable>($"select * from {nameof(HistoryTable)} where {nameof(HistoryTable.Line)} = '{name}'");
+                    if (monitrLineData.TryGetValue(name, out var listinfo))
+                    {
+                        listinfo.Clear();
+                        listinfo.AddRange(LineInfo);
+                    }
+                    else
+
+                        monitrLineData.Add(name, LineInfo.ToList());
+                }
+
+                Thread.Sleep(100);
+            }
+        }
+
+        /// <summary>
+        /// 报警信息数据库复位
+        /// </summary>
+        /// <returns></returns>
+        public bool DataBaseReset()
+        {
+            if (Mysql.IsOpen())
+            {
+                Mysql.CustomDBQuery($"DELETE FROM {nameof(HistoryTable)} where {nameof(HistoryTable.Line)} = '{sLineNum}'");
+                return true;
+            }
+
+            return false;
+        }
+
 
         //SPC 报警连接
         public void ConnectOmronPLC(string plcIP, int plcPort, int plcSA1, int plcDA1, int plcDA2, ref OperateResult operateResult, ref OmronFinsNet omronFinsNet)
@@ -523,6 +579,11 @@ namespace Machine
             int countModules = IniFile.ReadInt("Modules", "CountModules", 1, Def.GetAbsPathName(Def.ModuleExCfg));
             this.OverOrder = IniFile.ReadBool("Modules", "OverOrder", false, Def.GetAbsPathName(Def.ModuleExCfg));
             this.machineID = IniFile.ReadInt("Modules", "MachineID", -1, Def.GetAbsPathName(Def.ModuleExCfg));
+            var readLineInfo = IniFile.ReadAllItems("MonitorLine", Def.GetAbsPathName(Def.MachineCfg)).Select(kv => new { key = kv.Split('=')[0], value = kv.Split('=')[1] });
+            foreach (var info in readLineInfo)
+            {
+                monitorLineInfo.Add(info.value);
+            }
             if (this.machineID < 0)
             {
                 ShowMsgBox.ShowDialog("设备编号MachineID未配置，请在ModuleEx.cfg中配置", MessageType.MsgAlarm);
@@ -1139,6 +1200,16 @@ namespace Machine
             }
             #endregion
 
+            #region //声光报警器输出
+            count = (int)SystemIOGroup.LightTower;
+            for (int idx = 0; idx < count; idx++)
+            {
+                key = ("OLineInfoAlarm[" + (idx + 1) + "]");
+                this.OLineInfoAlarm[idx] = DecodeOutputID(IniFile.ReadString(module, key, "", path));
+                if (this.OLineInfoAlarm[idx] > -1) outputs.Add(this.OLineInfoAlarm[idx]);
+            }
+            #endregion
+
             #region // 安全门IO
 
             count = (int)SystemIOGroup.SafeDoor;
@@ -1631,6 +1702,28 @@ namespace Machine
                 }
             }
 
+            //集中监控报警声光器信号
+            List<HistoryTable> listALarmInfo = new List<HistoryTable>();
+            for (int i = 0; i < monitorLineInfo.Count; i++)
+            {
+                if (monitrLineData.TryGetValue(monitorLineInfo[i], out var value))
+                {
+                    if (value.Count > 0)
+                    {
+                        listALarmInfo.Add(value[0]);
+                    }
+                }
+            }
+
+            if (listALarmInfo.Count > 0 && OutputState(OLineInfoAlarm[0], false))
+            {
+                OutputAction(OLineInfoAlarm[0], true);
+            }
+            else if (listALarmInfo.Count == 0 && OutputState(OLineInfoAlarm[0], true))
+            {
+                OutputAction(OLineInfoAlarm[0], false);
+            }
+
             // 自动按下
             if (ManAutoBtnPress())
             {
@@ -1642,6 +1735,7 @@ namespace Machine
                 // 复位按下
                 else if (ResetBtnPress())
                 {
+                    DataBaseReset();
                     OutputAction(OLightTowerBuzzer[0], false);
                     this.RunsCtrl.Reset();
                 }
@@ -1879,7 +1973,11 @@ namespace Machine
                 Thread.Sleep(10);
                 return;
             }
-
+            // 机器人碰撞
+            RunProOnloadRobot onloadRobot = GetModule(RunID.OnloadRobot) as RunProOnloadRobot;
+            RunProOffloadRobot offloadRobot = GetModule(RunID.OffloadRobot) as RunProOffloadRobot;
+            RunProTransferRobot transferRobot = GetModule(RunID.Transfer) as RunProTransferRobot;
+            string strAlarmInfo = "";
             if (InputState(IOnloadRobotAlarm[0], true) || InputState(IOnloadRobotAlarm[1], true)
                 || InputState(IOnloadRobotAlarm[2], true) || InputState(IOnloadRobotAlarm[3], true))
             {
@@ -1889,8 +1987,9 @@ namespace Machine
                 || InputState(IOnloadRobotAlarm[2], true) || InputState(IOnloadRobotAlarm[3], true))
                 {
                     this.RunsCtrl.Stop();
-                    ShowMsgBox.ShowDialog("上料机器人柔性碰撞感应器报警，请检查机器人状态，后复位启动！", MessageType.MsgAlarm);                   
-                }                  
+                    //ShowMsgBox.ShowDialog("上料机器人柔性碰撞感应器报警，请检查机器人状态，后复位启动！", MessageType.MsgAlarm);        
+                    MachineCtrl.GetInstance().GetModule(RunID.OnloadRobot).ShowMessageBox(1, "上料机器人柔性碰撞感应器报警!!", "请检查机器人或PLC状态，处理异常后复位启动！", MessageType.MsgAlarm);
+                }
             }
 
             for (int i = 0; i < (int)SystemIOGroup.TransferRobot; i++)
@@ -1898,7 +1997,8 @@ namespace Machine
                 if (InputState(ITransferRobotAlarm[i], true))
                 {
                     this.RunsCtrl.Stop();
-                    ShowMsgBox.ShowDialog("调度机器人接近传感器报警，请检查机器人状态，后复位启动！", MessageType.MsgAlarm);
+                    //ShowMsgBox.ShowDialog("调度机器人接近传感器报警，请检查机器人状态，后复位启动！", MessageType.MsgAlarm);
+                    MachineCtrl.GetInstance().GetModule(RunID.Transfer).ShowMessageBox(1, "调度机器人接近传感器报警!!", "请检查机器人或PLC状态，处理异常后复位启动！", MessageType.MsgAlarm);
                 }
             }
 
@@ -1911,7 +2011,8 @@ namespace Machine
                 || InputState(IOffloadRobotAlarm[2], true) || InputState(IOffloadRobotAlarm[3], true))
                 {
                     this.RunsCtrl.Stop();
-                    ShowMsgBox.ShowDialog("下料机器人柔性碰撞感应器报警，请检查机器人状态，后复位启动！", MessageType.MsgAlarm);
+                    //ShowMsgBox.ShowDialog("下料机器人柔性碰撞感应器报警，请检查机器人状态，后复位启动！", MessageType.MsgAlarm);
+                    MachineCtrl.GetInstance().GetModule(RunID.OffloadRobot).ShowMessageBox(1, "下料机器人柔性碰撞感应器报警!!", "请检查机器人或PLC状态，处理异常后复位启动！", MessageType.MsgAlarm);
                 }
             }
 
@@ -1927,7 +2028,10 @@ namespace Machine
 
             if (InputState(IOnLoadLineCylinderAlarm, true))
             {
-                ShowMsgBox.ShowDialog("来料线气缸报警,请检查来料线气缸状态，后复位启动", MessageType.MsgAlarm);
+                string strMsg = "来料线气缸报警,请检查来料线气缸状态，后复位启动";
+                ShowMsgBox.ShowDialog(strMsg, MessageType.MsgAlarm);
+                transferRobot.RecordMessageInfo(strMsg, MessageType.MsgAlarm);
+
             }
         }
 

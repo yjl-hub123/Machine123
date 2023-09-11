@@ -368,6 +368,7 @@ namespace Machine
             if (InputState(IOffloadCheck, true))
             {
                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
+                RecordMessageInfo("NG电池满", MessageType.MsgAlarm);
                 ShowMessageBox(GetRunID() * 100 + 1, "NG电池已满", "请人工取走NG电池", MessageType.MsgWarning, 5, DialogResult.OK);
                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
                 return false;
@@ -421,6 +422,7 @@ namespace Machine
             if (bOffloadPrompt && InputState(IOffloadCheck, true))
             {
                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
+                RecordMessageInfo("NG电池满", MessageType.MsgAlarm);
                 ShowMessageBox(GetRunID() * 100 + 2, "NG电池已满", "请人工取走NG电池", MessageType.MsgWarning, 5, DialogResult.OK);
                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
             }
