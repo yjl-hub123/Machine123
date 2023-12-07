@@ -254,6 +254,11 @@ namespace Machine
 
             for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
             {
+                InsertPrivateParam("ClearMaintenance" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔故障解除", "炉腔故障解除：TRUE启用，FALSE禁用", bClearMaintenance[nRowIdx], RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_ADMIN);
+            }
+
+            for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
+            {
                 InsertPrivateParam("CirBakingTimes" + (nRowIdx + 1), "第" + (nRowIdx + 1) + "层抽检周期（次）", "", nCirBakingTimes[nRowIdx], RecordType.RECORD_INT, ParameterLevel.PL_STOP_ADMIN);
             }
 
@@ -1976,6 +1981,7 @@ namespace Machine
                 bPressure[nRowIdx] = ReadBoolParam(RunModule, "Pressure" + (nRowIdx + 1), false);
                 bTransfer[nRowIdx] = ReadBoolParam(RunModule, "Transfer" + (nRowIdx + 1), false);
                 nCirBakingTimes[nRowIdx] = ReadIntParam(RunModule, "CirBakingTimes" + (nRowIdx + 1), 1);
+                bClearMaintenance[nRowIdx] = ReadBoolParam(RunModule, "ClearMaintenance" + (nRowIdx + 1), false);
             }
 
             unSetVacTempValue = (uint)ReadIntParam(RunModule, "SetTempValue", (int)unSetVacTempValue);
@@ -2042,6 +2048,7 @@ namespace Machine
                 WriteParameter(RunModule, "OvenEnable" + (nRowIdx + 1), bOvenEnable[nRowIdx].ToString());
                 WriteParameter(RunModule, "Transfer" + (nRowIdx + 1), bTransfer[nRowIdx].ToString());
                 WriteParameter(RunModule, "Pressure" + (nRowIdx + 1), bPressure[nRowIdx].ToString());
+                WriteParameter(RunModule, "ClearMaintenance" + (nRowIdx + 1), bClearMaintenance[nRowIdx].ToString());
             }
             base.SaveParameter();
         }
@@ -2301,7 +2308,7 @@ namespace Machine
                 if (OvenBlowAlarm.Alarm == bgCavityData[nCavityIdx].BlowAlarm && bOvenEnable[nCavityIdx])
                 {
                     string msg = string.Format("{0}层破真空异常报警", nCavityIdx + 1);
-                    RecordMessageInfo("氮气加热异常报警", MessageType.MsgAlarm);
+                    RecordMessageInfo("破真空异常报警", MessageType.MsgAlarm);
                     ShowMessageBox(GetRunID() * 100 + 5, msg, "请查看干燥炉真空状态是否正常", MessageType.MsgWarning,10, DialogResult.OK);
                     bOvenEnable[nCavityIdx] = false;                     // 设置为禁用状态
                     SetCurOvenRest("破真空异常报警", nCavityIdx);

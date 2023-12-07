@@ -1452,7 +1452,7 @@ namespace Machine
                         string str = "";
                         if (ScanSend(ref str) && (!bScanPalletEN || str.Length == 24))
                         {
-                            if (CheckFakeCode(str))
+                            if (CheckFakeCode(str) || Def.IsNoHardware())
                             {
                                 for (int nColIdx = 0; nColIdx < 4; nColIdx++)
                                 {

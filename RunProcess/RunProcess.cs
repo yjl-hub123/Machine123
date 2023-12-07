@@ -1024,7 +1024,7 @@ namespace Machine
             {
                 dbRecord.AddAlarmInfo(new AlarmFormula(productFormula, msgID, msg, msgType, runModuleID, runName, curTime));
 
-                if (msgType > 2)
+                if (msgType > 2 && MachineCtrl.GetInstance().sqlLineUpload)
                     MachineCtrl.GetInstance().Mysql.InsterInto(new HistoryTable()
                     {
                         Line = MachineCtrl.GetInstance().sLineNum,
