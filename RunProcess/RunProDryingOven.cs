@@ -239,7 +239,7 @@ namespace Machine
 
             for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
             {
-                InsertPrivateParam("OvenEnable" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔使能", "炉腔使能：TRUE启用，FALSE禁用", bOvenEnable[nRowIdx], RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_TECHNOL);
+                InsertPrivateParam("OvenEnable" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔使能", "炉腔使能：TRUE启用，FALSE禁用", bOvenEnable[nRowIdx], RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_ADMIN);
             }
 
             for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
