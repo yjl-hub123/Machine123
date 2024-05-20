@@ -25,6 +25,7 @@ namespace Machine
             new DryOvenCmdAddr(0x82, 5500, 0, 100, 20),         // 工艺参数1（读）
             new DryOvenCmdAddr(0x82, 5000, 0, 20, 0),           // 整炉参数（读）
             new DryOvenCmdAddr(0x82, 5020, 0, 100, 10),          // 工作状态2（读）
+            new DryOvenCmdAddr(0x82, 5600, 0, 300, 60),         // OWT（补读）
 
             new DryOvenCmdAddr(0x82, 4520, 0, 250, 50),         // 工艺参数（写）
             new DryOvenCmdAddr(0x82, 5500, 0, 100, 20),         // 工艺参数1（写）
@@ -39,6 +40,12 @@ namespace Machine
             new DryOvenCmdAddr(0x82, 4777, 0, 1, 10),           // 真空呼吸状态打开/关闭（写）
             new DryOvenCmdAddr(0x82, 5102, 0, 1, 0),            // 上位机安全门状态打开/关闭（写）
             new DryOvenCmdAddr(0x82, 5100, 0, 2, 0),            // 烘烤完成电芯（写）       
+
+            new DryOvenCmdAddr(0x82, 6000, 0, 1, 440),          // 托盘条码及工艺开始时间（写）
+			new DryOvenCmdAddr(0x82, 5600, 0, 300, 60),        // 工艺开始设置（写）
+            new DryOvenCmdAddr(0x82, 5600, 0, 300, 60),        // 腔体状态设置（写）
+            new DryOvenCmdAddr(0x82, 5612, 0, 300, 60),        // 异常Marking设置（写）
+            new DryOvenCmdAddr(0x82, 5614, 0, 1, 60),        // 异常腔体报警（复位）（写）
         };
 
         #endregion
@@ -64,7 +71,7 @@ namespace Machine
         /// </summary>
         public DryingOvenClient()
         {
-            arrSendBuf = new byte[200];
+            arrSendBuf = new byte[500];
             arrRecvBuf = new byte[2000];
             updateLock = new object();
             arrCavity = new CavityData[5];
@@ -161,7 +168,7 @@ namespace Machine
         {
             if (IsConnect())
             {
-                for (int nCmdIdx = (int)DryOvenCmd.SenserState; nCmdIdx < ((int)DryOvenCmd.RunState2 + 1); nCmdIdx++)
+                for (int nCmdIdx = (int)DryOvenCmd.SenserState; nCmdIdx < ((int)DryOvenCmd.RunStateThree + 1); nCmdIdx++)
                 {
                     int nArea = ovenAddr[nCmdIdx].area;
                     int nWordAddr = ovenAddr[nCmdIdx].wordAddr;
@@ -335,7 +342,58 @@ namespace Machine
                         Buffer.BlockCopy(BitConverter.GetBytes((UInt32)data.unBakingOverBat), 0, buf, 0, 4);
                         break;
                     }
+                // 托盘条码及工艺开始时间
+                case DryOvenCmd.palletCodeAndStartTime:
+                    {
+                        int i = 0;
+                        foreach (var str in data.palletCodeAndStartTimes)
+                        {
+                            if (str != "0")
+                                Buffer.BlockCopy(Encoding.ASCII.GetBytes(str.PadRight(40, '\0')), 0, buf, i * 40, 40);
+                            i++;
+                        }
+                        nIndex = i * 40;
+                        break;
+                    }
+                // 工艺开始设置
+                case DryOvenCmd.bakingStart:
+                    {
+                        nIndex += 4 * 8;
+                        Buffer.BlockCopy(BitConverter.GetBytes(data.unBakingCount), 0, buf, nIndex += 4, 4);                    // 10)当前工艺次数
+                        /*Buffer.BlockCopy(BitConverter.GetBytes(1), 0, buf, nIndex += 4, 4);                                     // 11)炉腔异常点位
+                        nIndex += 4;
+                        Buffer.BlockCopy(BitConverter.GetBytes(0), 0, buf, nIndex += 4, 4);               // 13)过程 PIS 值 
+                        Buffer.BlockCopy(BitConverter.GetBytes(0), 0, buf, nIndex += 4, 4);           // 14)是否有过程 PIS 值*/
+                        nIndex += 4;
+                        break;
+                    }
+                // 炉腔状态设置
+                case DryOvenCmd.cavityState:
+                    {
+                        //if (unOvenRunState != 0)
+                        //{
+                        //    data.unOvenRunState = (ovenRunState)unOvenRunState;
+                        //}
 
+                        nIndex = 4;
+                        Buffer.BlockCopy(BitConverter.GetBytes((UInt32)data.unOvenRunState), 0, buf, 0, 4);       //腔体运行状态 5320
+                        break;
+                    }
+                // 写Marking值
+                case DryOvenCmd.ovenIsMarking:
+                    {
+                        nIndex += 4;
+                        Buffer.BlockCopy(BitConverter.GetBytes((UInt32)data.unOvenIsMarking), 0, buf, 0, 4);       //Marking值 5332
+                        break;
+                    }
+                // 炉腔异常报警复位
+                case DryOvenCmd.ovenAbnormalAlarm:
+                    {
+                        nIndex += 4;//* 6;
+                        Buffer.BlockCopy(BitConverter.GetBytes((UInt32)data.unAbnormalAlarm), 0, buf, 0, 4);     // 炉腔异常报警复位 5334
+                                                                                                                 //   nIndex += 4;
+                        break;
+                    }
             }
 
             nLen = nIndex / 2;
@@ -668,6 +726,50 @@ namespace Machine
                             // 读氮气温度
                             data.unNitrogenHeatOutTemp = BitConverter.ToSingle(buf, nByteIdx += 4);
                             data.unNitrogenInTemp = BitConverter.ToSingle(buf, nByteIdx += 4);
+                        }
+                        break;
+                    }
+                case DryOvenCmd.RunStateThree:
+                    {
+                        for (int nCavityIdx = 0; nCavityIdx < (int)ModuleRowCol.DryingOvenRow; nCavityIdx++)
+                        {
+                            CavityData data = arrData[nCavityIdx];
+                            int nByteIdx = nCavityIdx * nDataWidth * 2;
+
+                            // 腔体运行状态
+                            data.unOvenRunState = (ovenRunState)BitConverter.ToUInt32(buf, nByteIdx += 0); // 5320
+
+                            var b = BitConverter.ToUInt32(buf, nByteIdx += 4);  //5322
+                            var c = BitConverter.ToUInt32(buf, nByteIdx += 4);  //5324
+                            var d = BitConverter.ToUInt32(buf, nByteIdx += 4);  //5326
+                            // 读呼吸次数
+                            data.unVacBreatheCount = BitConverter.ToUInt32(buf, nByteIdx += 4);  //5328
+
+                            // 水含量值
+                            data.WaterValue = BitConverter.ToUInt32(buf, nByteIdx += 4) / 1000f;  //5330
+
+                            nByteIdx += 4;  //5332
+
+                            // 炉腔异常报警
+                            data.unAbnormalAlarm = (ovenAbnormalAlarm)BitConverter.ToUInt32(buf, nByteIdx += 4); //5334
+
+                            nByteIdx += 4 * 1;  //5336
+
+                            nByteIdx += 4;  //不读取工艺次数  //5338
+                            //       data.unBakingCount = BitConverter.ToUInt32(buf, nByteIdx += 4);
+                            data.unFurnaceChamberAbnormal = (ovenFurnaceChamberAbnormal)BitConverter.ToUInt32(buf, nByteIdx += 4);  //5340
+
+
+                            data.unMinProcessPISValues = BitConverter.ToUInt32(buf, nByteIdx += 4) / 1000f;  //5342
+                            data.unProcessPISValues = BitConverter.ToUInt32(buf, nByteIdx += 4) / 1000f;  //5344
+                            data.unIsHasProcessPIS = (OvenProcessPISState)BitConverter.ToUInt32(buf, nByteIdx += 4);   //5346
+                            data.unProcessSpecification = BitConverter.ToUInt32(buf, nByteIdx += 4) / 1000f;    //5348
+                            data.unAdvanceBakSpecifiValues = BitConverter.ToUInt32(buf, nByteIdx += 4) / 1000f;  //5350
+                            data.unWaterSpecificationValues = BitConverter.ToUInt32(buf, nByteIdx += 4) / 1000f;  //5352
+
+                            nByteIdx += 4 * 1;
+
+                            data.unAdvanceFinishCraft = (ovenAdvanceFinishCraft)BitConverter.ToUInt32(buf, nByteIdx += 4);
                         }
                         break;
                     }

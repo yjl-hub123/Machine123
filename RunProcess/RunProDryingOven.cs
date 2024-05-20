@@ -126,7 +126,7 @@ namespace Machine
         private CavityData[] bgCavityData;              // 后台更新腔体数据（临时）
         private CavityData[] curCavityData;             // 当前腔体数据（临时）
         private CavityData[] setCavityData;             // 设置腔体数据
-        private CavityState[] cavityState;              // 腔体状态
+        public CavityState[] cavityState;              // 腔体状态
         private bool[] bClearMaintenance;               // 指示解除维修状态
         public float[,] fWaterContentValue;             // 水含量值[层][阴阳]
         private ModuleEvent curRespEvent;               // 当前响应信号
@@ -186,6 +186,25 @@ namespace Machine
 
         public object changeLock;                       // 炉腔状态更新锁(用于处理手动续烤时变更参数后，
                                                         // 导致炉腔状态变为待上传水含量)
+
+        //OWT
+        private int nBakMaxCount;                       // 当前最大烘烤次数
+        private bool[] bClearAbnormalAlarm;             // 解除炉腔报警
+        private string[] nCurOvenException;             // 干燥炉多次没有提前出炉提示
+        public bool[] bIsHasPISValue;                   //是否有PIS值
+        public bool[] bIsUploadWater;                   //是否测试水含量
+        public float[] unPISValue;                      //PIS值
+        public bool[] bisBakingMode;                    // 烘烤出炉模式 true:提前出炉跳工艺(不测假电池) false:正常出炉 
+        public bool[] bFlagbit;                         // 出炉标志
+        public bool[] bAllowUpload;                     // 允许自动上传水含量(不测假电池用)
+
+        private int bRunMaxTemp;                        // 托盘起始温度大于等于设定值℃(该值可设定)时，不能自动开始
+
+        private uint[] nRunTime;                        // 烘烤运行时间
+		private DateTime[] uploadWaterTime;             // 上传水含量时间
+		public DateTime[] UploadWaterTime { get { return uploadWaterTime; } }
+
+
         #endregion
 
 
@@ -252,9 +271,10 @@ namespace Machine
                 InsertPrivateParam("Transfer" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔转移", "炉腔转移：TRUE启用，FALSE禁用", bTransfer[nRowIdx], RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_TECHNIC);
             }
 
+            InsertPrivateParam("BakMaxCount", "最大烘烤次数", "烘烤次数限制(>2)", nBakMaxCount, RecordType.RECORD_INT);
             for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
             {
-                InsertPrivateParam("ClearMaintenance" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔故障解除", "炉腔故障解除：TRUE启用，FALSE禁用", bClearMaintenance[nRowIdx], RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_ADMIN);
+                InsertPrivateParam("ClearAbnormalAlarm" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔多次不满足特殊工艺故障解除", "炉腔多次不满足特殊工艺故障解除：TRUE启用，FALSE禁用", bClearAbnormalAlarm[nRowIdx], RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_ADMIN);
             }
 
             for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
@@ -271,6 +291,8 @@ namespace Machine
             InsertPrivateParam("OvenPort", "干燥炉端口", "干燥炉IP的Port", nOvenPort, RecordType.RECORD_INT, ParameterLevel.PL_STOP_ADMIN);
             InsertPrivateParam("ResouceUploadTime", "温度数据采集周期(s)", "Resouce上传数据时间间隔", nResouceUploadTime, RecordType.RECORD_INT, ParameterLevel.PL_STOP_ADMIN);
             InsertPrivateParam("PickUsPreState", "取常压状态", "TRUE开关炉门判断常压状态，FALSE判断真空值", bPickUsPreState, RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_ADMIN);
+            InsertPrivateParam("RunMaxTemp", "托盘开始起始温度限制", "托盘起始温度大于等于设定值℃(该值可设定)时，不能自动开始：>0", bRunMaxTemp, RecordType.RECORD_INT, ParameterLevel.PL_STOP_ADMIN);
+
         }
 
         #endregion
@@ -290,7 +312,7 @@ namespace Machine
             bPressure = new bool[(int)ModuleDef.PalletMaxRow] { false, false, false, false, false };
             bTransfer = new bool[(int)ModuleDef.PalletMaxRow] { false, false, false, false, false };
             nCirBakingTimes = new int[(int)ModuleDef.PalletMaxRow] { 1, 1, 1, 1, 1 };
-            nCurBakingTimes = new int[(int)ModuleDef.PalletMaxRow] { 1, 1, 1, 1, 1 };
+            nCurBakingTimes = new int[(int)ModuleDef.PalletMaxRow] { 0, 0, 0, 0, 0 };
             dWaterStandard = new double[3] { 200, 250, 400 };
 
             unSetVacTempValue = 110;
@@ -380,6 +402,19 @@ namespace Machine
             bHeartBeat = false;
             dtCopyDataTime = DateTime.Now;
 
+            //OWT
+            nBakMaxCount = 3;
+            bClearAbnormalAlarm = new bool[(int)ModuleRowCol.DryingOvenRow];
+            nRunTime = new uint[(int)ModuleRowCol.DryingOvenRow];
+            nCurOvenException = new string[(int)ModuleDef.PalletMaxRow];
+            bIsHasPISValue = new bool[(int)ModuleRowCol.DryingOvenRow];
+            bIsUploadWater = new bool[(int)ModuleRowCol.DryingOvenRow];
+            unPISValue = new float[(int)ModuleRowCol.DryingOvenRow];
+            bisBakingMode = new bool[(int)ModuleRowCol.DryingOvenRow];
+            bFlagbit = new bool[(int)ModuleRowCol.DryingOvenRow];
+            bAllowUpload = new bool[(int)ModuleRowCol.DryingOvenRow];
+			uploadWaterTime = new DateTime[(int)ModuleRowCol.DryingOvenRow];
+
             for (int nCavityIdx = 0; nCavityIdx < (int)ModuleRowCol.DryingOvenRow; nCavityIdx++)
             {
                 bgCavityData[nCavityIdx] = new CavityData();
@@ -408,10 +443,25 @@ namespace Machine
                 bShowPressureHint[nCavityIdx] = true;
                 bShowStayTimeOut[nCavityIdx] = true;
                 nCurOvenRest[nCavityIdx] = "";
+
+                //owt
+                nCurOvenException[nCavityIdx] = "";
+                bIsHasPISValue[nCavityIdx] = false;
+                bIsUploadWater[nCavityIdx] = false;
+                unPISValue[nCavityIdx] = 0;
+                bisBakingMode[nCavityIdx] = false;
+                bFlagbit[nCavityIdx] = false;
+                bAllowUpload[nCavityIdx] = false;
+				uploadWaterTime[nCavityIdx] = DateTime.Now;
             }
             doorProcessingFlag = false;
             changeLock = new object();
             dtCopyDataTime = DateTime.Now;
+
+
+
+            bRunMaxTemp = 100;
+
         }
         /// <summary>
         /// 读取模组配置
@@ -656,6 +706,12 @@ namespace Machine
                             if (CheckWater(fWaterContentValue, nCurOperatRow))
                             {
                                 strErr = "";
+
+
+                                UpdateOvenData(ref bgCavityData);
+                                /// false 不测水含量 true 测试水含量
+                                bIsUploadWater[nCurOperatRow] = bisBakingMode[nCurOperatRow] ? false : true;
+
                                 if (!UploadBatWaterStatus(nCurOperatRow, bgCavityData[nCurOperatRow], ref strErr))
                                 {
                                     fWaterContentValue[nCurOperatRow, 0] = -1.0f;
@@ -669,9 +725,12 @@ namespace Machine
                                     break;
                                 }
 
+                                //写入plc修改炉腔状态
+                                {
+                                    setCavityData[nCurOperatRow].unOvenRunState = ovenRunState.WaterFinish;
+                                    ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCurOperatRow, setCavityData[nCurOperatRow]);
+                                }
                                 strErr = "";
-
-
                                 if (!MesUploadOvenFinish(nCurOperatRow, ref strErr))
                                 {
                                     fWaterContentValue[nCurOperatRow, 0] = -1.0f;
@@ -702,31 +761,43 @@ namespace Machine
                                             int nIndex = nCurOperatRow * (int)ModuleDef.PalletMaxCol + nPltIdx;
                                             Pallet[nIndex].Stage |= PltStage.Baking;
                                             Pallet[nIndex].Type = PltType.WaitOffload;
+
+                                            // 提前出炉 
+                                            if (Pallet[nIndex].Bat[0, 0].IsType(BatType.Fake) && bisBakingMode[nCurOperatRow])
+                                            {
+
+                                                if (!Pallet[nIndex].IsCancelFake)
+                                                {
+                                                    Pallet[nIndex].Bat[0, 0].Type = BatType.OK;
+                                                }
+                                                else
+                                                {
+                                                    Pallet[nIndex].Bat[0, 0].Type = BatType.Invalid;
+                                                    Pallet[nIndex].Bat[0, 0].Code = "";
+                                                }
+
+                                            }
+                                            Pallet[nIndex].NBakCount = 0;
+                                            Pallet[nIndex].IsCancelFake = false;
+
+
                                             SaveRunData(SaveType.Pallet, nIndex);
                                         }
                                     }
                                 }
                                 strFakeCode[nCurOperatRow] = "";
-                                if (nCurBakingTimes[nCurOperatRow] >= nCirBakingTimes[nCurOperatRow])
-                                {
-                                    nCurBakingTimes[nCurOperatRow] = 1;
-                                    fWaterContentValue[nCurOperatRow, 0] = -1.0f;
-                                    fWaterContentValue[nCurOperatRow, 1] = -1.0f;
-                                    fWaterContentValue[nCurOperatRow, 2] = -1.0f;
-                                    isSample[nCurOperatRow] = false;
-                                }
-                                else
-                                {
-                                    nCurBakingTimes[nCurOperatRow]++;
-                                    isSample[nCurOperatRow] = true;
-                                    if (MachineCtrl.GetInstance().bSampleSwitch)
-                                    {
-                                        fWaterContentValue[nCurOperatRow, 0] = 0.0f;
-                                        fWaterContentValue[nCurOperatRow, 1] = 0.0f;
-                                        fWaterContentValue[nCurOperatRow, 2] = 0.0f;
-                                    }
-                                }
+                                nCurBakingTimes[nCurOperatRow] = 0;
+                                fWaterContentValue[nCurOperatRow, 0] = -1.0f;
+                                fWaterContentValue[nCurOperatRow, 1] = -1.0f;
+                                fWaterContentValue[nCurOperatRow, 2] = -1.0f;
+                                bIsUploadWater[nCurOperatRow] = false;
+                                bIsHasPISValue[nCurOperatRow] = false;
+                                bAllowUpload[nCurOperatRow] = false;
+                                unPISValue[nCurOperatRow] = 0;
                                 nBakingOverBat += CalBatCount(nCurOperatRow, PltType.WaitOffload, BatType.OK);
+
+                                UploadWaterTime[nCurOperatRow] = DateTime.Parse(Pallet[nCurOperatRow * (int)ModuleDef.PalletMaxCol].EndTime);
+
                                 BakingOverBatOperate();
                                 SetCavityState(nCurOperatRow, CavityState.Standby);
                                 SetWCUploadStatus(nCurOperatRow, WCState.WCStateInvalid);
@@ -736,12 +807,21 @@ namespace Machine
                             // 水含量超标
                             else if (nCurBakingTimes[nCurOperatRow] == 1 || MachineCtrl.GetInstance().bSampleSwitch)
                             {
+
+                                if (MachineCtrl.GetInstance().CancelFakeMode)
+                                {
+                                    MachineCtrl.GetInstance().CancelFakeMode = false;
+                                    MachineCtrl.GetInstance().WriteParameter("System", "CancelFakeMode", MachineCtrl.GetInstance().CancelFakeMode.ToString());
+                                    MachineCtrl.GetInstance().ReadParameter();
+                                    ParameterChangedCsv("CancelFakeMode", "系统");
+                                }
                                 for (int nPltIdx = 0; nPltIdx < (int)ModuleDef.PalletMaxCol; nPltIdx++)
                                 {
                                     if (GetPlt(nCurOperatRow, nPltIdx).IsType(PltType.WaitRes))
                                     {
                                         int nIndex = nCurOperatRow * (int)ModuleDef.PalletMaxCol + nPltIdx;
                                         Pallet[nIndex].Type = PltType.WaitRebakeBat;
+                                        Pallet[nIndex].IsCancelFake = false;
                                         SaveRunData(SaveType.Pallet, nIndex);
                                     }
                                 }
@@ -749,6 +829,10 @@ namespace Machine
                                 fWaterContentValue[nCurOperatRow, 0] = -1.0f;
                                 fWaterContentValue[nCurOperatRow, 1] = -1.0f;
                                 fWaterContentValue[nCurOperatRow, 2] = -1.0f;
+                                bIsUploadWater[nCurOperatRow] = false;
+                                bIsHasPISValue[nCurOperatRow] = false;
+                                bAllowUpload[nCurOperatRow] = false;
+                                unPISValue[nCurOperatRow] = 0;
                                 nBakingType[nCurOperatRow] = (int)BakingType.Rebaking;
                                 MesmiCloseNcAndProcess(nCurOperatRow);
                                 SetCavityState(nCurOperatRow, CavityState.Rebaking);
@@ -1117,6 +1201,11 @@ namespace Machine
 
                             // 切换腔体状态
                             SetCavityState(nCurOperatRow, CavityState.WaitRes);
+                            if (!Def.IsNoHardware() && !DryRun)
+                            {
+                                setCavityData[nCurOperatRow].unOvenRunState = ovenRunState.WaitRes;
+                                ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCurOperatRow, setCavityData[nCurOperatRow]);
+                            }
                             SaveRunData(SaveType.Variables);
                         }
 
@@ -1138,6 +1227,26 @@ namespace Machine
                             // 切换腔体状态
                             SetCavityState(nCurOperatRow, CavityState.Standby);
                             SaveRunData(SaveType.Variables);
+                        }
+                        // 取放其他类型托盘
+                        else
+                        {
+                            if (ModuleEvent.OvenPlaceFullPlt == curRespEvent || ModuleEvent.OvenPlaceFakeFullPlt == curRespEvent)
+                            {
+                                // 取最大烘烤次数                                     
+                                nCurBakingTimes[nCurOperatRow] = Pallet[2 * nCurOperatRow].NBakCount > Pallet[(2 * nCurOperatRow) + 1].NBakCount ?
+                                Pallet[2 * nCurOperatRow].NBakCount : Pallet[(2 * nCurOperatRow) + 1].NBakCount;
+                            }
+
+
+                            if ((!Def.IsNoHardware() && !DryRun) && (
+                                    GetPlt(nCurOperatRow, 0).IsType(PltType.OK) ||
+                                    GetPlt(nCurOperatRow, 1).IsType(PltType.OK)))
+                            {
+                                setCavityData[nCurOperatRow].unOvenRunState = ovenRunState.Invalid;
+                                ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCurOperatRow, setCavityData[nCurOperatRow]);
+
+                            }
                         }
 
                         if (CheckEvent(this, curRespEvent, EventState.Finished))
@@ -1256,14 +1365,58 @@ namespace Machine
                         this.msgEng = string.Format("Oven [{0}] row set oven parameter before  parameter", nCurOperatRow + 1);
                         CurMsgStr(this.msgChs, this.msgEng);
 
+                        int ProLongTime = 0;
+                        List<string> MarkingRecords = new List<string>();
+                        bool pallet1 = false;
+                        bool pallet2 = false;
 
-                        var getParamFlag = MachineCtrl.GetInstance().UseMesPrarm/* && MesGetOvenParam(nCurOperatRow, ref setCavityData[nCurOperatRow])*/;
-                        GetOvenParam(ref setCavityData[nCurOperatRow], getParamFlag);
-                        if (DryRun || OvenParamOperate(nCurOperatRow, setCavityData[nCurOperatRow]))
+                        bool baCount = Pallet[nCurOperatRow * 2].NBakCount == 0 && Pallet[nCurOperatRow * 2 + 1].NBakCount == 0;
+
+                        if (baCount) // 首次烘烤
                         {
-                            nStartCount[nCurOperatRow] = 0;
-                            this.nextAutoStep = AutoSteps.Auto_SetPreHeatVacBreath;
-                            SaveRunData(SaveType.Variables);
+                            pallet1 = Pallet[nCurOperatRow * 2].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType, MarkingRecords, ref ProLongTime);
+                            Sleep(100);
+                            pallet2 = Pallet[(nCurOperatRow * 2) + 1].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType, MarkingRecords, ref ProLongTime);
+                        }
+                        else
+                        {
+                            pallet1 = Pallet[nCurOperatRow * 2].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType);
+                            Sleep(100);
+                            pallet2 = Pallet[(nCurOperatRow * 2) + 1].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType);
+                        }
+
+                        /// 两个托盘任意一个托盘有异常点位或者托盘不是第一次烘烤 并且是取消假电池模式
+                        if ((!pallet1 || !pallet2 || !baCount) && (Pallet[nCurOperatRow * 2].IsCancelFake || Pallet[nCurOperatRow * 2 + 1].IsCancelFake))
+                        {
+                            for (int nPltIdx1 = 0; nPltIdx1 < (int)ModuleDef.PalletMaxCol; nPltIdx1++)
+                            {
+                                int nIndex = nCurOperatRow * (int)ModuleDef.PalletMaxCol + nPltIdx1;
+                                Pallet[nIndex].Type = PltType.WaitRebakeBat;
+                                SaveRunData(SaveType.Pallet, nIndex);
+                            }
+                            CancelFakeCSV(nCurOperatRow);
+                            nBakingType[nCurOperatRow] = (int)BakingType.Rebaking;
+                            MesmiCloseNcAndProcess(nCurOperatRow);
+                            SetCavityState(nCurOperatRow, CavityState.Rebaking);
+                            SetWCUploadStatus(nCurOperatRow, WCState.WCStateInvalid);
+                            this.nextAutoStep = AutoSteps.Auto_WorkEnd;
+                            SaveRunData(SaveType.AutoStep | SaveType.Variables | SaveType.MaxMinValue);
+                        }
+                        else
+                        { 
+                            var getParamFlag = MachineCtrl.GetInstance().UseMesPrarm/* && MesGetOvenParam(nCurOperatRow, ref setCavityData[nCurOperatRow])*/;
+                            GetOvenParam(ref setCavityData[nCurOperatRow], getParamFlag);
+
+
+                            //  累加时间 小于等于 最大延迟设定baking时间 ？ 加累加时间 ： 加最大延迟设定baking时间
+                            setCavityData[nCurOperatRow].unVacHeatTime += (ProLongTime <= MachineCtrl.GetInstance().MaxProBakingTime ? (uint)ProLongTime : (uint)MachineCtrl.GetInstance().MaxProBakingTime);
+
+                            if (DryRun || OvenParamOperate(nCurOperatRow, setCavityData[nCurOperatRow]))
+                            {
+                                nStartCount[nCurOperatRow] = 0;
+                                this.nextAutoStep = AutoSteps.Auto_SetPreHeatVacBreath;
+                                SaveRunData(SaveType.Variables);
+                            }
                         }
                         break;
                     }
@@ -1311,13 +1464,58 @@ namespace Machine
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], true);
                                 ShowMessageBox(GetRunID() * 100 + 61, strErr, strMsg, MessageType.MsgWarning);
                                 OutputAction(MachineCtrl.GetInstance().OLightTowerBuzzer[0], false);
-                                bOvenEnable[nCurOperatRow] = false;                     // Mes托盘开始失败设置为禁用状态
-                                SetCurOvenRest("Mes托盘开始异常报警", nCurOperatRow);
-                                this.nextAutoStep = AutoSteps.Auto_WorkEnd;
-                                SaveParameter();
-                                SaveRunData(SaveType.AutoStep);
+                                
+                                nStartCount[nCurOperatRow]++;
+                                if (nStartCount[nCurOperatRow] > 3)
+                                {
+                                    bOvenEnable[nCurOperatRow] = false;                     // Mes托盘开始失败设置为禁用状态
+                                    SetCurOvenRest("Mes托盘开始异常报警", nCurOperatRow);
+                                    this.nextAutoStep = AutoSteps.Auto_WorkEnd;
+                                    SaveParameter();
+                                    SaveRunData(SaveType.AutoStep);
+                                }
+
                                 return;
                             }
+
+                            //启动前先始炉腔状态
+                            {
+                                setCavityData[nCurOperatRow].unOvenRunState = ovenRunState.Invalid;
+                                ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCurOperatRow, setCavityData[nCurOperatRow]);
+                            }
+
+                            Sleep(5000);
+
+                            fWaterContentValue[nCurOperatRow, 0] = -1.0f;
+                            fWaterContentValue[nCurOperatRow, 1] = -1.0f;
+                            fWaterContentValue[nCurOperatRow, 2] = -1.0f;
+                            bIsUploadWater[nCurOperatRow] = false;
+                            bIsHasPISValue[nCurOperatRow] = false;
+                            bAllowUpload[nCurOperatRow] = false;
+                            unPISValue[nCurOperatRow] = 0;
+                            bFlagbit[nCurOperatRow] = false; //出炉标志
+
+                            nCurBakingTimes[nCurOperatRow]++;
+                            Pallet[2 * nCurOperatRow].NBakCount++;
+                            Pallet[2 * nCurOperatRow + 1].NBakCount++;
+                            arrStartTime[nCurOperatRow] = DateTime.Now;
+
+                            setCavityData[nCurOperatRow].palletCodeAndStartTimes[0] = GetPlt(nCurOperatRow, 0).Code;
+                            setCavityData[nCurOperatRow].palletCodeAndStartTimes[1] = GetPlt(nCurOperatRow, 1).Code;
+                            setCavityData[nCurOperatRow].palletCodeAndStartTimes[10] = arrStartTime[nCurOperatRow].ToString("yyyyMMddHH");
+                            setCavityData[nCurOperatRow].unBakingCount = (uint)nCurBakingTimes[nCurOperatRow];  //工艺次数
+                            setCavityData[nCurOperatRow].unFurnaceChamberAbnormal = ovenFurnaceChamberAbnormal.Not;
+                            setCavityData[nCurOperatRow].unProcessPISValues = 0;
+                            setCavityData[nCurOperatRow].unIsHasProcessPIS = 0;
+                            setCavityData[nCurOperatRow].unOvenRunState = ovenRunState.Baking;
+
+                            OvenSetPalletCodeAndStartTime(nCurOperatRow);
+                            // 下发Marking异常 
+                            OvenPalletIsMarking(nCurOperatRow);
+                            // 保存炉子开始烘烤数据
+                            SaveFurnaceLaverDate(nCurOperatRow, arrStartTime[nCurOperatRow]);
+
+
 
                             nBakCount[nCurOperatRow]++;
                             arrStartTime[nCurOperatRow] = DateTime.Now;
@@ -1437,6 +1635,8 @@ namespace Machine
                 nCurBakingTimes[nCavityIdx] = 1;
                 nBakCount[nCavityIdx] = 0;
                 nalarmBakCount[nCavityIdx] = 0;
+
+                bClearAbnormalAlarm[nCavityIdx] = false;
             }
 
             base.InitRunData();
@@ -1481,6 +1681,8 @@ namespace Machine
             this.nCurOperatCol = FileStream.ReadInt(section, "nCurOperatCol", this.nCurOperatCol);
             this.nBakingOverBat = FileStream.ReadInt(section, "nBakingOverBat", this.nBakingOverBat);
 
+            this.bRunMaxTemp = FileStream.ReadInt(section, "bRunMaxTemp", this.bRunMaxTemp);
+
             // 腔体状态
             for (int nIdx = 0; nIdx < cavityState.Length; nIdx++)
             {
@@ -1523,6 +1725,18 @@ namespace Machine
                 if (!string.IsNullOrEmpty(str))
                 {
                     arrVacStartTime[nIdx] = Convert.ToDateTime(str);
+                }
+            }
+
+            // 炉层上传水含量时间
+            for (int nIdx = 0; nIdx < uploadWaterTime.Length; nIdx++)
+            {
+                key = string.Format("uploadWaterTime[{0}]", nIdx);
+                string str = "";
+                str = FileStream.ReadString(section, key, "");
+                if (!string.IsNullOrEmpty(str))
+                {
+                    uploadWaterTime[nIdx] = Convert.ToDateTime(str);
                 }
             }
 
@@ -1713,6 +1927,30 @@ namespace Machine
                 //当前温度
                 key = string.Format("nOvenTemp[{0}]", nRow);
                 nOvenTemp[nRow] = FileStream.ReadDouble(section, key, nOvenTemp[nRow]);
+
+                //是否有PIS值
+                key = string.Format("IsHasPISValue[{0}]", nRow);
+                bIsHasPISValue[nRow] = FileStream.ReadBool(section, key, bIsHasPISValue[nRow]);
+
+                //是否上传水含量
+                key = string.Format("IsUploadWater[{0}]", nRow);
+                bIsUploadWater[nRow] = FileStream.ReadBool(section, key, bIsUploadWater[nRow]);
+
+                //PIS值
+                key = string.Format("PISValue[{0}]", nRow);
+                unPISValue[nRow] = (float)FileStream.ReadDouble(section, key, unPISValue[nRow]);
+
+                //烘烤出炉模式
+                key = string.Format("bisBakingMode[{0}]", nRow);
+                bisBakingMode[nRow] = FileStream.ReadBool(section, key, bisBakingMode[nRow]);
+
+                // 出炉标志
+                key = string.Format("bFlagbit[{0}]", nRow);
+                bFlagbit[nRow] = FileStream.ReadBool(section, key, bFlagbit[nRow]);
+
+                // 允许上传水含量(不测假电池用)
+                key = string.Format("bAllowUpload[{0}]", nRow);
+                bAllowUpload[nRow] = FileStream.ReadBool(section, key, bAllowUpload[nRow]);
             }
 
             base.LoadRunData();
@@ -1769,6 +2007,12 @@ namespace Machine
                     FileStream.WriteString(section, key, arrVacStartTime[nIdx].ToString());
                 }
 
+                // 炉层上传水含量时间
+                for (int nIdx = 0; nIdx < uploadWaterTime.Length; nIdx++)
+                {
+                    key = string.Format("uploadWaterTime[{0}]", nIdx);
+                    FileStream.WriteString(section, key, uploadWaterTime[nIdx].ToString());
+                }
                 // 炉层真空第一次小于100Pa值
                 for (int nIdx = 0; nIdx < arrVacStartValue.Length; nIdx++)
                 {
@@ -1957,6 +2201,29 @@ namespace Machine
 
                     key = string.Format("nOvenTemp[{0}]", nRow);
                     FileStream.WriteDouble(section, key, nOvenTemp[nRow]);
+
+                    // 是否有PIS值
+                    key = string.Format("IsHasPISValue[{0}]", nRow);
+                    FileStream.WriteBool(section, key, bIsHasPISValue[nRow]);
+                    //是否上传水含量
+                    key = string.Format("IsUploadWater[{0}]", nRow);
+                    FileStream.WriteBool(section, key, bIsUploadWater[nRow]);
+                    //PIS值
+                    key = string.Format("PISValue[{0}]", nRow);
+                    FileStream.WriteDouble(section, key, (int)unPISValue[nRow]);
+
+                    //烘烤出炉模式
+                    key = string.Format("bisBakingMode[{0}]", nRow);
+                    FileStream.WriteBool(section, key, bisBakingMode[nRow]);
+
+                    //烘烤出炉标志
+                    key = string.Format("bFlagbit[{0}]", nRow);
+                    FileStream.WriteBool(section, key, bFlagbit[nRow]);
+
+                    // 允许上传水含量(不测假电池用)
+                    key = string.Format("bAllowUpload[{0}]", nRow);
+                    FileStream.WriteBool(section, key, bAllowUpload[nRow]);
+
                 }
             }
 
@@ -1981,7 +2248,7 @@ namespace Machine
                 bPressure[nRowIdx] = ReadBoolParam(RunModule, "Pressure" + (nRowIdx + 1), false);
                 bTransfer[nRowIdx] = ReadBoolParam(RunModule, "Transfer" + (nRowIdx + 1), false);
                 nCirBakingTimes[nRowIdx] = ReadIntParam(RunModule, "CirBakingTimes" + (nRowIdx + 1), 1);
-                bClearMaintenance[nRowIdx] = ReadBoolParam(RunModule, "ClearMaintenance" + (nRowIdx + 1), false);
+                bClearAbnormalAlarm[nRowIdx] = ReadBoolParam(RunModule, "ClearAbnormalAlarm" + (nRowIdx + 1), false);
             }
 
             unSetVacTempValue = (uint)ReadIntParam(RunModule, "SetTempValue", (int)unSetVacTempValue);
@@ -2035,6 +2302,10 @@ namespace Machine
             nResouceUploadTime = ReadIntParam(RunModule, "ResouceUploadTime", nResouceUploadTime);
             bPickUsPreState = ReadBoolParam(RunModule, "PickUsPreState", bPickUsPreState);
 
+            //owt
+            nBakMaxCount = ReadIntParam(RunModule, "BakMaxCount", nBakMaxCount);
+            bRunMaxTemp = ReadIntParam(RunModule, "RunMaxTemp", bRunMaxTemp);
+
             return true;
         }
 
@@ -2048,7 +2319,7 @@ namespace Machine
                 WriteParameter(RunModule, "OvenEnable" + (nRowIdx + 1), bOvenEnable[nRowIdx].ToString());
                 WriteParameter(RunModule, "Transfer" + (nRowIdx + 1), bTransfer[nRowIdx].ToString());
                 WriteParameter(RunModule, "Pressure" + (nRowIdx + 1), bPressure[nRowIdx].ToString());
-                WriteParameter(RunModule, "ClearMaintenance" + (nRowIdx + 1), bClearMaintenance[nRowIdx].ToString());
+                WriteParameter(RunModule, "ClearAbnormalAlarm" + (nRowIdx + 1), bClearAbnormalAlarm[nRowIdx].ToString());
             }
             base.SaveParameter();
         }
@@ -2463,14 +2734,15 @@ namespace Machine
                         MesmiCloseNcAndProcess(nCavityIdx);
                         SaveParameter();
                         SaveRunData(SaveType.Variables);
+                        var CavityIdx = nCavityIdx;
                         Task.Run(() =>
                         {
                             DialogResult result = ShowMsgBox.ShowDialog(msg, MessageType.MsgQuestion);
                             if (DialogResult.Yes == result || DialogResult.OK == result || DialogResult.No == result)
                             {
-                                nBakingType[nCavityIdx] = (int)BakingType.Invalid;
-                                MesmiCloseNcAndProcess(nCavityIdx);
-                                SetCavityState(nCavityIdx, CavityState.Standby);
+                                nBakingType[CavityIdx] = (int)BakingType.Invalid;
+                                MesmiCloseNcAndProcess(CavityIdx);
+                                SetCavityState(CavityIdx, CavityState.Standby);
                                 SaveRunData(SaveType.Variables);
                             }
                         });
@@ -2481,17 +2753,118 @@ namespace Machine
                     {
                         lock (changeLock)
                         {
-                            if (!bContinueFlag[nCavityIdx] && (bgCavityData[nCavityIdx].unWorkTime >= nRunTime || bgCavityData[nCavityIdx].unWorkTime >= nBakTime || DryRun)
+                            Sleep(2000);
+                            UpdateOvenData(ref bgCavityData);
+
+                            // 是否有过程PIS值
+                            bool ishasPIS = OvenProcessPISState.Have == bgCavityData[nCavityIdx].unIsHasProcessPIS;
+                            // 过程PIS值< 提前出炉规格值 && 过程PIS值 < 过程规格值
+                            bool AdvanceBak = ((bgCavityData[nCavityIdx].unProcessPISValues < bgCavityData[nCavityIdx].unAdvanceBakSpecifiValues &&
+                                bgCavityData[nCavityIdx].unProcessPISValues < bgCavityData[nCavityIdx].unProcessSpecification));
+
+                            // 过程PIS值 < 水含量规格值
+                            bool WaterSpecification = bgCavityData[nCavityIdx].unProcessPISValues < bgCavityData[nCavityIdx].unWaterSpecificationValues;
+
+                            // 过程PIS值 < 过程规格值
+                            bool ProcessSpecification = bgCavityData[nCavityIdx].unProcessPISValues < bgCavityData[nCavityIdx].unProcessSpecification;
+
+
+                            int NPltIdx = nCavityIdx * (int)ModuleDef.PalletMaxCol;
+                            var IsCancelFake = (Pallet[NPltIdx].IsCancelFake || Pallet[NPltIdx + 1].IsCancelFake);
+
+                            // 保存pis日志
+                            SavePISLog(nCavityIdx, bgCavityData[nCavityIdx].unProcessPISValues.ToString(), bgCavityData[nCavityIdx].unAdvanceBakSpecifiValues.ToString(), bgCavityData[nCavityIdx].unProcessSpecification.ToString(), bgCavityData[nCavityIdx].unWaterSpecificationValues.ToString());
+
+                            if (Def.IsNoHardware() || ishasPIS && AdvanceBak)   //有PIS值 && PIS值合格
+                            {
+
+                                bFlagbit[nCavityIdx] = false; //出炉标志
+                                bisBakingMode[nCavityIdx] = true; //提前出炉模式
+
+                                bIsHasPISValue[nCavityIdx] = true;  // 是否有PIS值
+                                unPISValue[nCavityIdx] = bgCavityData[nCavityIdx].unProcessPISValues;  //过程PIS值  要处于1000
+                                for (int nColIdx = 0; nColIdx < (int)ModuleDef.PalletMaxCol; nColIdx++)
+                                {
+                                    if (GetPlt(nCavityIdx, nColIdx).IsType(PltType.OK))
+                                    {
+                                        // 切换托盘状态
+                                        int nPltIdx = nCavityIdx * (int)ModuleDef.PalletMaxCol + nColIdx;
+                                        Pallet[nPltIdx].Type = PltType.Detect;
+                                        Pallet[nPltIdx].EndTime = DateTime.Now.ToString();
+                                        SaveRunData(SaveType.Pallet | SaveType.MaxMinValue, nPltIdx);
+                                    }
+                                }
+
+                                // 切换腔体状态
+                                nBakingType[nCavityIdx] = (int)BakingType.Invalid;
+                                SetCavityState(nCavityIdx, CavityState.Detect);
+                                SaveRunData(SaveType.MaxMinValue);
+
+
+                                /*if (!Def.IsNoHardware() && !DryRun)*/
+                                {
+                                    setCavityData[nCavityIdx].unOvenRunState = ovenRunState.WaitRes;
+                                    ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCavityIdx, setCavityData[nCavityIdx]);
+                                }
+
+
+                                // 给plc设置其他工艺状态 再获取一次数据 确保读到owt的最小pis值
+                                Sleep(20000);
+                                UpdateOvenData(ref bgCavityData);
+
+                                if (fWaterContentValue[nCavityIdx, 0] < 0 && fWaterContentValue[nCavityIdx, 1] < 0
+                                    && fWaterContentValue[nCavityIdx, 2] < 0)
+                                {
+                                    SetWCUploadStatus(nCavityIdx, WCState.WCStateUpLoad);
+                                }
+                                SaveRunData(SaveType.Variables);
+                                SavePISCSV(nCavityIdx);
+                            }
+                            else if (!bContinueFlag[nCavityIdx] && (bgCavityData[nCavityIdx].unWorkTime >= nRunTime || bgCavityData[nCavityIdx].unWorkTime >= nBakTime || DryRun)
                                 && DryingTimeCheck(nCavityIdx, nRunTime) && MaxMinValueJudge(nCavityIdx))
                             {
+                                //  (没有过程PIS值 || (有过程PIS值 && (!(过程PIS值 < 过程规格值) || !(过程PIS值 < 水含量规格值))))    && 托盘是取消假电池模式 
+                                if ((!ishasPIS || (ishasPIS && (!ProcessSpecification || !WaterSpecification))) && IsCancelFake)
+                                {
+                                    for (int nPltIdx1 = 0; nPltIdx1 < (int)ModuleDef.PalletMaxCol; nPltIdx1++)
+                                    {
+                                        int nIndex = nCavityIdx * (int)ModuleDef.PalletMaxCol + nPltIdx1;
+                                        Pallet[nIndex].Type = PltType.WaitRebakeBat;
+                                        Pallet[nIndex].EndTime = DateTime.Now.ToString();
+                                        SaveRunData(SaveType.Pallet, nIndex);
+
+                                    }
+
+                                    /*if (!Def.IsNoHardware() && !DryRun)*/
+                                    {
+                                        setCavityData[nCavityIdx].unOvenRunState = ovenRunState.WaitRes;
+                                        ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCavityIdx, setCavityData[nCavityIdx]);
+                                    }
+
+                                    // 给plc设置其他工艺状态 再获取一次数据 确保读到owt的最小pis值
+                                    Sleep(20000);
+                                    UpdateOvenData(ref bgCavityData);
+
+                                    CancelFakeCSV(nCavityIdx);
+                                    nBakingType[nCavityIdx] = (int)BakingType.Rebaking;
+                                    MesmiCloseNcAndProcess(nCavityIdx);
+                                    SetCavityState(nCavityIdx, CavityState.Rebaking);
+                                    SetWCUploadStatus(nCavityIdx, WCState.WCStateInvalid);
+                                    SaveRunData(SaveType.Variables | SaveType.MaxMinValue);
+
+                                }
                                 // 干燥完成
-                                if (unVacBkBTime <= bgCavityData[nCavityIdx].unVacBkBTime + accVacTime[nCavityIdx]
+                                else if (unVacBkBTime <= bgCavityData[nCavityIdx].unVacBkBTime + accVacTime[nCavityIdx]
                                     && OvenVacTimeAlarm.Alarm != bgCavityData[nCavityIdx].VacTimeAlarm)
                                 {
                                     for (int nColIdx = 0; nColIdx < (int)ModuleDef.PalletMaxCol; nColIdx++)
                                     {
                                         if (GetPlt(nCavityIdx, nColIdx).IsType(PltType.OK))
                                         {
+
+                                            fWaterContentValue[nCavityIdx, 0] = -1.0f;
+                                            fWaterContentValue[nCavityIdx, 1] = -1.0f;
+                                            fWaterContentValue[nCavityIdx, 2] = -1.0f;
                                             // 切换托盘状态
                                             int nPltIdx = nCavityIdx * (int)ModuleDef.PalletMaxCol + nColIdx;
                                             Pallet[nPltIdx].Type = PltType.Detect;
@@ -2507,6 +2880,14 @@ namespace Machine
                                     // 切换腔体状态
                                     nBakingType[nCavityIdx] = (int)BakingType.Invalid;
                                     SetCavityState(nCavityIdx, CavityState.Detect);
+
+
+                                    //发送炉腔状态到plc转owt
+                                    {
+                                        setCavityData[nCavityIdx].unOvenRunState = ovenRunState.WaitRes;
+                                        ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCavityIdx, setCavityData[nCavityIdx]);
+                                    }
+
                                     if (MachineCtrl.GetInstance().bSampleSwitch || (fWaterContentValue[nCavityIdx, 0] < 0 && fWaterContentValue[nCavityIdx, 1] < 0
                                         && fWaterContentValue[nCavityIdx, 2] < 0))
                                     {
@@ -2526,6 +2907,17 @@ namespace Machine
                                 }
                                 else if (OvenVacTimeAlarm.Alarm != bgCavityData[nCavityIdx].VacTimeAlarm)
                                 {
+
+                                    /*if (!Def.IsNoHardware() && !DryRun)*/
+                                    {
+                                        setCavityData[nCavityIdx].unOvenRunState = ovenRunState.Break;
+                                        ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCavityIdx, setCavityData[nCavityIdx]);
+                                    }
+
+                                    // 给plc设置其他工艺状态 再获取一次数据 确保读到owt的最小pis值
+                                    Sleep(20000);
+                                    UpdateOvenData(ref bgCavityData);
+
                                     // 切换腔体状态
                                     nBakingType[nCavityIdx] = (int)BakingType.Invalid;
                                     MesmiCloseNcAndProcess(nCavityIdx);
@@ -2544,8 +2936,107 @@ namespace Machine
                                 RecordMessageInfo("烘烤结束异常", MessageType.MsgAlarm);
                                 MesmiCloseNcAndProcess(nCavityIdx);
                                 SetCavityState(nCavityIdx, CavityState.Standby);
+
+                                //发送炉腔报警状态到plc
+                                setCavityData[nCavityIdx].unOvenRunState = ovenRunState.Break;
+                                ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCavityIdx, setCavityData[nCavityIdx]);
+
                                 SaveRunData(SaveType.Variables);
                             }
+
+                            UpdateOvenData(ref bgCavityData);
+
+                            var isPassUnWaterSpecificationValues = ishasPIS && bgCavityData[nCavityIdx].unProcessPISValues < bgCavityData[nCavityIdx].unWaterSpecificationValues;
+                            var isOvenRunStateNotInvalid = (setCavityData[nCavityIdx].unOvenRunState != ovenRunState.Invalid || bgCavityData[nCavityIdx].unOvenRunState != ovenRunState.Invalid);
+                            //测试水含量判断 有过程PIS值 && PIS值小于 < 水含量规格值  
+                            if (Def.IsNoHardware() || isPassUnWaterSpecificationValues && isOvenRunStateNotInvalid)
+                            {
+                                bisBakingMode[nCavityIdx] = true; //提前出炉模式
+                                bIsHasPISValue[nCavityIdx] = true;  // 是否有PIS值
+
+                                ShowMessageBox(GetRunID() * 100 + 16, (nCavityIdx + 1) + " 层满足水含量上传", bgCavityData[nCavityIdx].unProcessPISValues + "小于" + bgCavityData[nCavityIdx].unWaterSpecificationValues + "满足自动上传水含量", MessageType.MsgWarning, 5, DialogResult.OK);
+                                //     bIsUploadWater[nCavityIdx] = true;
+                                // 切换托盘状态
+                                for (int nPltIdx = 0; nPltIdx < (int)ModuleDef.PalletMaxCol; nPltIdx++)
+                                {
+                                    if (GetPlt(nCavityIdx, nPltIdx).IsType(PltType.Detect) ||
+                                        GetPlt(nCavityIdx, nPltIdx).IsType(PltType.WaitRes))
+                                    {
+                                        int nIndex = nCavityIdx * (int)ModuleDef.PalletMaxCol + nPltIdx;
+                                        Pallet[nIndex].Type = PltType.WaitRes;
+                                        SaveRunData(SaveType.Pallet, nIndex);
+                                    }
+                                }
+
+                                // 切换腔体状态
+                                nBakingType[nCavityIdx] = (int)BakingType.Invalid;
+                                SetCavityState(nCavityIdx, CavityState.WaitRes);
+
+                                /*if (!Def.IsNoHardware() && !DryRun)*/
+                                {
+                                    setCavityData[nCavityIdx].unOvenRunState = ovenRunState.WaitRes;
+                                    ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCavityIdx, setCavityData[nCavityIdx]);
+                                }
+
+
+                                // 给plc设置其他工艺状态 再获取一次数据 确保读到owt的最小pis值
+                                Sleep(20000);
+                                UpdateOvenData(ref bgCavityData);
+
+                                if (Def.IsNoHardware())
+                                {
+                                    SetWaterContent(nCavityIdx, new float[3] { 100, 87, 70 });
+                                }
+                                else
+                                {
+                                    SetWaterContent(nCavityIdx, new float[3] { bgCavityData[nCavityIdx].WaterValue, bgCavityData[nCavityIdx].WaterValue, bgCavityData[nCavityIdx].WaterValue });
+                                }
+
+                                SetWCUploadStatus(nCavityIdx, WCState.WCStateInvalid);
+
+                                bFlagbit[nCavityIdx] = true; //出炉标志
+                                SaveRunData(SaveType.Variables | SaveType.MaxMinValue);
+
+                            }
+                            //托盘是取消假电池模式 提前出炉时  测试水含量判断    不满足（有过程PIS值 && PIS值小于 < 水含量规格值） 
+                            else if (IsCancelFake && !isPassUnWaterSpecificationValues && isOvenRunStateNotInvalid)
+                            {
+                                for (int nPltIdx1 = 0; nPltIdx1 < (int)ModuleDef.PalletMaxCol; nPltIdx1++)
+                                {
+                                    int nIndex = nCavityIdx * (int)ModuleDef.PalletMaxCol + nPltIdx1;
+                                    Pallet[nIndex].Type = PltType.WaitRebakeBat;
+                                    Pallet[nIndex].EndTime = DateTime.Now.ToString();
+                                    SaveRunData(SaveType.Pallet, nIndex);
+
+                                }
+
+                                setCavityData[nCavityIdx].unOvenRunState = ovenRunState.WaitRes;
+                                ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nCavityIdx, setCavityData[nCavityIdx]);
+
+                                // 给plc设置其他工艺状态 再获取一次数据 确保读到owt的最小pis值
+                                Sleep(20000);
+                                UpdateOvenData(ref bgCavityData);
+
+                                CancelFakeCSV(nCavityIdx);
+                                nBakingType[nCavityIdx] = (int)BakingType.Rebaking;
+                                MesmiCloseNcAndProcess(nCavityIdx);
+                                SetCavityState(nCavityIdx, CavityState.Rebaking);
+                                SetWCUploadStatus(nCavityIdx, WCState.WCStateInvalid);
+                                SaveRunData(SaveType.Variables | SaveType.MaxMinValue);
+                            }
+                            // 当前炉腔状态不是未开始工艺下料完成并且新托盘进入腔体 // 腔体状态必须是待检测或待下料
+                            else if ((setCavityData[nCavityIdx].unOvenRunState != ovenRunState.Invalid || bgCavityData[nCavityIdx].unOvenRunState != ovenRunState.Invalid) &&
+                                (GetCavityState(nCavityIdx) == CavityState.Detect || GetCavityState(nCavityIdx) == CavityState.WaitRes))
+                            {
+                                ShowMessageBox(GetRunID() * 100 + 16, (nCavityIdx + 1) + " 层不满足取消水含量条件", "正常出炉模式", MessageType.MsgWarning, 5, DialogResult.OK);
+                                bisBakingMode[nCavityIdx] = false;  //正常出炉
+
+                                bFlagbit[nCavityIdx] = true; //出炉标志
+
+                            }
+
+                            SaveRunData(SaveType.Variables | SaveType.MaxMinValue);
+
                         }
                     }
                     else if ((Def.IsNoHardware() || OvenWorkState.Start == bgCavityData[nCavityIdx].WorkState)
@@ -3276,6 +3767,8 @@ namespace Machine
                 {
                     UpdateOvenData(ref curCavityData);
 
+                    OvenParameterCSV(nIndex + 1, data);
+
                     if (data.unSetVacTempValue == CurCavityData(nIndex).unSetVacTempValue &&
                         data.unSetPreTempValue1 == CurCavityData(nIndex).unSetPreTempValue1 &&
                         data.unSetPreTempValue2 == CurCavityData(nIndex).unSetPreTempValue2 &&
@@ -3660,8 +4153,21 @@ namespace Machine
                         GetPlt(nCavityIdx, 1).IsType(PltType.WaitRes) &&
                         GetPlt(nCavityIdx, 1).IsStage(PltStage.Onload))
                     {
-                        nIndex = nCavityIdx;
-                        return true;
+                        if (bAllowUpload[nCavityIdx] && bisBakingMode[nCavityIdx])  //  允许自动上传 并且不测假电池
+                        {
+                            nIndex = nCavityIdx;
+                            return true;
+                        }
+                        else if (!bAllowUpload[nCavityIdx] && bisBakingMode[nCavityIdx]) //  不允许自动上传 并且不测假电池
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            nIndex = nCavityIdx;
+                            return true;
+
+                        }
                     }
                 }
             }
@@ -4017,12 +4523,22 @@ namespace Machine
                     if (IsCavityEN(nCavityIdx) && !IsPressure(nCavityIdx) && !IsTransfer(nCavityIdx))
                     {
                         int nPltIdx = nCavityIdx * (int)ModuleDef.PalletMaxCol;
-                        if (Pallet[nPltIdx].IsType(PltType.OK) && Pallet[nPltIdx].IsStage(PltStage.Onload) && !PltIsEmpty(Pallet[nPltIdx]) &&
-                            Pallet[nPltIdx + 1].IsType(PltType.OK) && Pallet[nPltIdx + 1].IsStage(PltStage.Onload) && !PltIsEmpty(Pallet[nPltIdx + 1]))
+                        bool flag = false;
+
+                        UpdateOvenData(ref curCavityData);
+                        for (int i = 0; i < 4; i++)
+                            if (curCavityData[nCavityIdx].unTempValue[nPltIdx % (int)ModuleDef.PalletMaxCol, 0, i] > bRunMaxTemp)
+                            {
+                                flag = true;
+                                break;
+                            }
+                        //启动判断与 添加假电池检查
+                        if (IsPushFakeBat(nCavityIdx, nPltIdx, flag))
                         {
                             nIndex = nCavityIdx;
                             return true;
                         }
+
                     }
                 }
             }
@@ -4405,6 +4921,485 @@ namespace Machine
 
         #endregion
 
+        #region OWT 相关方法
+
+        /// <summary>
+        /// 设置托盘码与工艺时间
+        /// </summary>
+        public bool OvenSetPalletCodeAndStartTime(int nIndex, bool bAlarm = true)
+        {
+            if (Def.IsNoHardware() || DryRun)
+            {
+                return true;
+            }
+            if (nIndex < 0 || nIndex >= (int)ModuleRowCol.DryingOvenRow)
+            {
+                return false;
+            }
+
+            string strMsg, strDisp;
+            DateTime startTime = DateTime.Now;
+
+            var data = setCavityData[nIndex];
+
+
+            if (!ovenClient.SetDryOvenData(DryOvenCmd.palletCodeAndStartTime, nIndex, data))
+            {
+                if (bAlarm)
+                {
+                    strDisp = "请在干燥炉本地查看故障报警状态";
+                    strMsg = string.Format("{0}层托盘条码或工艺开始时间写入超时", nIndex + 1);
+                    ShowMessageBox(GetRunID() * 100 + 26, strMsg, strDisp, MessageType.MsgWarning);
+                }
+            }
+            //工艺启动后更新对应pis参数
+            ovenClient.SetDryOvenData(DryOvenCmd.bakingStart, nIndex, data);
+            ovenClient.SetDryOvenData(DryOvenCmd.cavityState, nIndex, data);
+            return true;
+        }
+
+        /// <summary>
+        /// 异常Marking写入
+        /// </summary>
+        public bool OvenIsMarkingOperate(int nIndex, CavityData data, bool bAlarm = true)
+        {
+            if (nIndex < 0 || nIndex >= (int)ModuleRowCol.DryingOvenRow || null == data)
+            {
+                return false;
+            }
+
+            if (!ovenClient.SetDryOvenData(DryOvenCmd.ovenIsMarking, nIndex, data))
+            {
+                if (bAlarm)
+                {
+                    string strMsg = "Marking下发PLC失败";
+                    string strDisp = "请检查干燥炉连接状态";
+                    ShowMessageBox(GetRunID() * 100 + 25, strMsg, strDisp, MessageType.MsgWarning, 10, DialogResult.OK);
+                }
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 炉腔异常报警复位写入
+        /// </summary>
+        public bool OvenAbnormalAlarm(int nIndex, CavityData data, bool bAlarm = true)
+        {
+            if (nIndex < 0 || nIndex >= (int)ModuleRowCol.DryingOvenRow || null == data)
+            {
+                return false;
+            }
+
+            if (!ovenClient.SetDryOvenData(DryOvenCmd.ovenAbnormalAlarm, nIndex, data))
+            {
+                if (bAlarm)
+                {
+                    string strMsg = "炉腔异常报警复位写入PLC失败";
+                    string strDisp = "请检查干燥炉连接状态";
+                    ShowMessageBox(GetRunID() * 100 + 25, strMsg, strDisp, MessageType.MsgWarning, 10, DialogResult.OK);
+                }
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///  连续多次特殊工艺炉腔异常状态
+        /// </summary>
+        /// <param name="nIndex"></param>
+        /// <returns></returns>
+        public bool OvenAbnormalState(int nIndex)
+        {
+            if (nIndex < 0 || nIndex >= curCavityData.Length)
+            {
+                return false;
+            }
+
+            // 没有报警要进去判断有不有报警
+            if (!bClearAbnormalAlarm[nIndex])
+            {
+                //if (nOvenID == 8 &&  nIndex == 2)
+                //{
+                //    bClearAbnormalAlarm[nIndex] = true;
+                //}
+
+                if ((CurCavityData(nIndex).unAbnormalAlarm == ovenAbnormalAlarm.Alarm) /*|| bClearAbnormalAlarm[nIndex]*/)
+                {
+                    //   bOvenEnable[nIndex] = false;                     // 设置为禁用状态
+
+                    SetClearAbnormalAlarm(nIndex);
+                    SetCurOvenRest("连续多次特殊工艺不满足炉腔异常", nIndex);
+                    string strAlarmInfo = string.Format("干燥炉{0}\r\n第{1}层连续多次特殊工艺不满足异常", nOvenID + 1, nIndex + 1);
+                    RecordMessageInfo(strAlarmInfo, MessageType.MsgWarning);
+                    SaveParameter();
+                    SaveRunData(SaveType.Variables);
+
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else  // 有报警直接退出
+            {
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// 设置炉腔多次不满足特殊工艺故障
+        /// </summary>
+        public bool SetClearAbnormalAlarm(int nIndex)
+        {
+            if (nIndex >= 0 && nIndex < (int)ModuleDef.PalletMaxRow)
+            {
+                bClearAbnormalAlarm[nIndex] = true;  // 有异常
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 无电芯模式托盘添加假电池检查
+        /// </summary>
+        public bool IsPushFakeBat(int nCavityIdx, int nPltIdx, bool flag)
+        {
+            var isBaking = Pallet[nPltIdx].IsType(PltType.OK) && Pallet[nPltIdx].IsStage(PltStage.Onload) && !PltIsEmpty(Pallet[nPltIdx]) &&
+            Pallet[nPltIdx + 1].IsType(PltType.OK) && Pallet[nPltIdx + 1].IsStage(PltStage.Onload) && !PltIsEmpty(Pallet[nPltIdx + 1]) && !flag;
+
+            var isHasFake = MachineCtrl.GetInstance().CancelFakeMode && (Pallet[nPltIdx].Bat[0, 0].Code == "取消假电池已取出" || Pallet[nPltIdx + 1].Bat[0, 0].Code == "取消假电池已取出");
+
+            var bakingCount = Pallet[nPltIdx].NBakCount + Pallet[nPltIdx + 1].NBakCount;
+            var isHasMaking = !Pallet[nPltIdx].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType) || !Pallet[nPltIdx + 1].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType);
+            if (isBaking)
+            {
+                //当开启假电池模式，并取走了假电池时：1 第二次工艺及以上  2 炉腔内托盘有making电池  都需回上料上假电池带假电池
+                if (isHasFake && (bakingCount > 0 || isHasMaking))
+                {
+                    Pallet[nPltIdx].Type = PltType.WaitRebakeBat;
+                    Pallet[nPltIdx + 1].Type = PltType.WaitRebakeBat;
+                    nBakingType[nCavityIdx] = (int)BakingType.Rebaking;
+                    SetCavityState(nCavityIdx, CavityState.Rebaking);
+                    return false;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 获取炉腔多次不满足特殊工艺故障解除
+        /// </summary>
+        public bool IsAbnormalAlarm(int nIndex)
+        {
+
+            if (nIndex > -1 && nIndex < (int)ModuleDef.PalletMaxRow)
+            {
+                return bClearAbnormalAlarm[nIndex]; //ture 有异常
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 取消假电池回炉日志
+        /// </summary>
+        /// <param name="nFloorIndex"></param>
+        /// <returns></returns>
+        private bool CancelFakeCSV(int nFloorIndex)
+        {
+            string strUploadTime = DateTime.Now.ToString("T");
+            string strLog = string.Format("{0},{1},{2},{3},{4},{5}"
+                , MachineCtrl.GetInstance().strResourceID[nOvenID]
+                , nOvenID + 1
+                , Convert.ToString((nFloorIndex + 10), 16).ToUpper()
+                , Pallet[2 * nFloorIndex].Code
+                 , Pallet[2 * nFloorIndex + 1].Code
+                , "取消假电池失败，没满足出炉条件回炉上假电池"
+                 , Pallet[2 * nFloorIndex].IsCancelFake
+                , Pallet[2 * nFloorIndex + 1].IsCancelFake
+                 , strUploadTime);
+
+            string strFileName = DateTime.Now.ToString("yyyyMMdd") + ".CSV";
+
+            string strFilePath = "D:\\MESLog\\取消假电池回炉";
+            string strColHead = "干燥炉资源号,干燥炉编号(ID),炉层(A-B-C-D-E),夹具条码1,夹具条码2,原因,取消假电池托盘1标志,取消假电池托盘2标志,上传时间";
+            MachineCtrl.GetInstance().WriteCSV(strFilePath, strFileName, strColHead, strLog);
+
+            return true;
+
+        }
+
+        #endregion
+
+        #region OWT 数据保存
+
+        public string getDryRow(int dryCurOperaRow)
+        {
+            string FurnaceLayer = "";
+            switch (dryCurOperaRow)
+            {
+                case 0:
+                    FurnaceLayer = "A";
+                    break;
+                case 1:
+                    FurnaceLayer = "B";
+                    break;
+                case 2:
+                    FurnaceLayer = "C";
+                    break;
+                case 3:
+                    FurnaceLayer = "D";
+                    break;
+                case 4:
+                    FurnaceLayer = "E";
+                    break;
+                default:
+                    break;
+            }
+            return FurnaceLayer;
+        }
+        public void SavePISCSV(int dryCurOperaRow)
+        {
+
+            string sFileName = string.Format($"{DateTime.Now.ToString("yyyyMMdd")}-{MachineCtrl.GetInstance().strResourceID[nOvenID]}-{nOvenID + 1}" + ".CSV");
+            string sFilePath = "D:\\MesLog\\PIS值";
+            //  string sHead = "炉层,IsHasPISValue,IsUploadWater,PIS值";
+            string sHead = "写入时间,炉层,是否有PIS值,是否上传水含量,PIS值";
+
+            string sConent = string.Format($"{DateTime.Now.ToString()},{(dryCurOperaRow + 1).ToString()}, {(bIsHasPISValue[dryCurOperaRow] ? "有" : "没有")}, {(bIsUploadWater[dryCurOperaRow] ? "上传" : "不上传")}, {(unPISValue[dryCurOperaRow])}");
+
+            //string sConent = string.Format($"{dryCurOperaRow + 1},{bIsHasPISValue[dryCurOperaRow]}," +
+            //    $"{bIsUploadWater[dryCurOperaRow]},{unPISValue[dryCurOperaRow]}");
+            //写入CSV
+            MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sHead, sConent);
+
+        }
+
+        public void SavePISLog(int dryCurOperaRow, string unProcessPISValues, string unAdvanceBakSpecifiValues, string unProcessSpecification, string unWaterSpecificationValues)
+        {
+
+            // 过程PIS值< 提前出炉规格值 && 过程PIS值 < 过程规格值
+
+            string sFileName = string.Format($"{DateTime.Now.ToString("yyyyMMdd")}-{MachineCtrl.GetInstance().strResourceID[nOvenID]}-{nOvenID + 1}" + ".CSV");
+            string sFilePath = "D:\\MesLog\\过程PIS采集日志";
+            string sHead = "写入时间,炉层,过程PIS值,提前出炉规格值,过程规格值,水含量规格值,是否取消假电池";
+
+            string CancelFake = Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol)].IsCancelFake || Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + 1].IsCancelFake ? "是" : "否";
+
+            string sConent = string.Format($"{DateTime.Now.ToString()},{(dryCurOperaRow + 1).ToString()}, {unProcessPISValues}, {unAdvanceBakSpecifiValues}, {unProcessSpecification},{unWaterSpecificationValues},{CancelFake}");
+
+            //写入CSV
+            MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sHead, sConent);
+
+        }
+
+        public void SaveMarkingWriteCSV(int dryCurOperaRow, bool flag, int MarkingValue)
+        {
+
+            string sFileName = string.Format($"{DateTime.Now.ToString("yyyyMMdd")}-{MachineCtrl.GetInstance().strResourceID[nOvenID]}-{nOvenID + 1}" + ".CSV");
+            string sFilePath = "D:\\MesLog\\Marking异常写入值";
+            //  string sHead = "炉层,IsHasPISValue,IsUploadWater,PIS值";
+            string sHead = "写入时间,炉层,是否有Marking,Marking异常点位,本地Makring配置";
+
+
+            string MarkingType = IniFile.ReadString("Parameter", "MarkingType", MachineCtrl.GetInstance().MarkingType, Def.GetAbsPathName(Def.MachineCfg));
+
+            string sConent = string.Format($"{DateTime.Now.ToString()},{(dryCurOperaRow + 1).ToString()}, {(flag ? "有" : "没有")}, {(MarkingValue)},{(MarkingType)}");
+
+            //写入CSV
+            MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sHead, sConent);
+
+        }
+
+        /// <summary>
+        /// 保存炉子开始烘烤数据
+        /// </summary>
+        /// <param name="dryCurOperaRow">炉层</param>
+        /// <param name="startTime">开始时间</param>
+        /// 
+        public void SaveFurnaceLaverDate(int dryCurOperaRow, DateTime startTime)
+        {
+
+
+            string FurnaceLayer = getDryRow(dryCurOperaRow);
+
+            string sFileName = string.Format($"{startTime.ToString("yyyyMMddHH")}-{MachineCtrl.GetInstance().strResourceID[nOvenID]}-{nOvenID + 1/*GetOvenID() + 1*/}{FurnaceLayer}" + ".CSV");
+            string sFilePath = "D:\\MesLog\\托盘电芯条码数据";
+            string sHead = "写入时间,序号,托盘条码,电芯条码,是否满盘,是否包含水含量电芯,是否有异常Marking,Marking种类,当前烘烤次数,当前腔体运行状态,托盘电芯个数,是否取消假电池";
+
+            if (!Directory.Exists(sFilePath)) Directory.CreateDirectory(sFilePath);
+            bool flag = File.Exists(Path.Combine(sFilePath, sFileName));
+            if (flag)
+            {
+                File.Delete(Path.Combine(sFilePath, sFileName));
+            }
+
+
+            string CancelFake = Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol)].IsCancelFake || Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + 1].IsCancelFake ? "是" : "否";
+
+            for (int i = 0; i < (int)ModuleDef.PalletMaxCol; i++)
+            {
+                //获得托盘行列
+                int pltMaxRow = 0;
+                int pltMaxCol = 0;
+                int batCount = 0;
+                bool batIsMarking = Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType);
+                MachineCtrl.GetInstance().GetPltRowCol(ref pltMaxRow, ref pltMaxCol);
+
+                string IsPalFull = Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].IsFullCount(ref batCount) ? "是" : "否";
+                string IsHasFakeBat = Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].HasFake() ? "是" : "否";
+
+
+
+                //循环托盘每个电池
+                for (int row = 0; row < pltMaxRow; row++)
+                {
+                    for (int col = 0; col < pltMaxCol; col++)
+                    {
+                        if (Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].Bat[row, col].Type != BatType.Invalid && Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].Bat[row, col].Code != string.Empty && Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].Bat[row, col].Type != BatType.Fake)
+                        {
+
+
+                            string sConent = string.Format($"{DateTime.Now.ToString()},{row * col + col},{Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].Code}," +
+                                $"{Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].Bat[row, col].Code},{IsPalFull},{IsHasFakeBat},{(batIsMarking ? "没有" : "有")}," +
+                                $"{(Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + i].Bat[row, col].MarkingType)},{setCavityData[nCurOperatRow].unBakingCount},{setCavityData[nCurOperatRow].unOvenRunState},{batCount},{CancelFake}");
+                            //写入CSV
+                            MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sHead, sConent);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void SaveWaterValueCSV(int dryCurOperaRow, CavityData cavityData, int nCode, string resultmessage, float[] fWater, string sVacBreatheCount, string pltStartTime, string pltEndTime, string dryWorkTime, string strBatteryCode)
+        {
+            string FurnaceLayer = getDryRow(dryCurOperaRow);
+            string fakeBatCode = "";
+            string fakePalle = "";
+            string sFileName = string.Format($"{arrStartTime[dryCurOperaRow].ToString("yyyyMMddHH")}-{MachineCtrl.GetInstance().strResourceID[nOvenID]}-{nOvenID + 1/*GetOvenID() + 1*/}{FurnaceLayer}" + ".CSV");
+            string sFilePath = "D:\\MesLog\\水含量电芯结果";
+            string sHead = "写入时间,干燥炉资源号,托盘条码,电芯条码,返回代码,返回信息,阴极极片水含量,阳极极片水含量,混合样水含量,电芯位置信息,真空呼吸次数,烘烤开始时间,烘烤结束时间,烘烤时间,是否有过程pis值,pis值,pis规格值,最小pis值,水含量规格值,是否测试水含量";
+            string IsUploadWater = bIsUploadWater[dryCurOperaRow] ? "是" : "否";
+
+            if (Pallet[dryCurOperaRow * (int)ModuleDef.PalletMaxCol].Bat[0, 0].Type == BatType.Fake && Pallet[dryCurOperaRow * (int)ModuleDef.PalletMaxCol].Bat[0, 0].Code == strBatteryCode ||
+                Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + 1].Bat[0, 0].Type == BatType.Fake && Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + 1].Bat[0, 0].Code == strBatteryCode)
+            {
+                if (Pallet[dryCurOperaRow * (int)ModuleDef.PalletMaxCol].Bat[0, 0].Type == BatType.Fake)
+                {
+                    fakeBatCode = Pallet[dryCurOperaRow * (int)ModuleDef.PalletMaxCol].Bat[0, 0].Code;
+                    fakePalle = Pallet[dryCurOperaRow * (int)ModuleDef.PalletMaxCol].Code;
+                }
+                else
+                {
+                    fakeBatCode = Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + 1].Bat[0, 0].Code;
+                    fakePalle = Pallet[(dryCurOperaRow * (int)ModuleDef.PalletMaxCol) + 1].Code;
+                }
+
+                string sConent = string.Format($"{DateTime.Now.ToString()}, {MachineCtrl.GetInstance().strResourceID[nOvenID]},{fakePalle}," +
+           $"{fakeBatCode},{nCode},{resultmessage}," +
+           $"{fWater[0]},{fWater[1]},{fWater[0]},0,{sVacBreatheCount},{pltStartTime},{pltEndTime},{dryWorkTime},{((int)cavityData.unIsHasProcessPIS == 1 ? "1" : "0")},{cavityData.unProcessPISValues},{cavityData.unProcessSpecification},{cavityData.unMinProcessPISValues},{cavityData.unWaterSpecificationValues},{IsUploadWater}");
+                //写入CSV
+                MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sHead, sConent);
+            }
+
+
+
+        }
+
+        /// <summary> 查询有不有异常Marking并下发
+        /// 
+        /// </summary>
+        /// <param name="dryCurOperaRow"></param>
+        /// <returns></returns>
+        private bool OvenPalletIsMarking(int dryCurOperaRow)
+        {
+            //    string MarkingType = IniFile.ReadString("Parameter", "MarkingType", MachineCtrl.GetInstance().MarkingType, Def.GetAbsPathName(Def.MachineCfg));
+
+            if (Def.IsNoHardware() || DryRun)
+            {
+                return true;
+            }
+
+            bool pallet1 = Pallet[dryCurOperaRow * 2].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType);
+
+            Sleep(100);
+
+            bool pallet2 = Pallet[(dryCurOperaRow * 2) + 1].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType);
+
+            setCavityData[nCurOperatRow].unOvenIsMarking = (pallet1 && pallet2) ? 0 : 1;  //没有异常写入0  有异常写入1
+
+            if (!OvenIsMarkingOperate(nCurOperatRow, setCavityData[nCurOperatRow]))
+            {
+                return false;
+            }
+
+            SaveMarkingWriteCSV(dryCurOperaRow, setCavityData[nCurOperatRow].unOvenIsMarking == 1 ? true : false, setCavityData[nCurOperatRow].unOvenIsMarking);
+
+            return true;
+
+        }
+
+
+        private void OvenParameterCSV(int RowIndex, CavityData data)
+        {
+            string sFilePath = "D:\\InterfaceOpetate\\OvenParameter";
+            string sFileName = string.Format($"{DateTime.Now.ToString("yyyyMMdd")}-{(nOvenID + 1) + "号干燥炉下发工艺参数"}" + ".CSV");
+            string sColHead = "下发时间,炉层,温度设定,温度下限,温度上限,预热时间,真空加热时间,真空压力下限,真空压力上限,开门破真空时长,A状态抽真空时间," +
+                "A状态真空压力,B状态充干燥气时间,B状态充干燥气压力,B状态充干燥气保持时间,B状态真空压力,B状态抽真空时间,真空呼吸时间间隔," +
+                "预热呼吸时间间隔,预热呼吸保持时间,预热呼吸真空压力,第一次预热呼吸压力";
+
+            string sLog = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},",
+                DateTime.Now,
+                RowIndex,
+                data.unSetVacTempValue,
+                data.unVacTempLowerLimit,
+                data.unVacTempUpperLimit,
+                data.unPreHeatTime1,
+                data.unVacHeatTime,
+                data.unPressureLowerLimit,
+                data.unPressureUpperLimit,
+                data.unOpenDoorBlowTime,
+                data.unAStateVacTime,
+                data.unAStateVacPressure,
+                data.unBStateBlowAirTime,
+                data.unBStateBlowAirPressure,
+                data.unBStateBlowAirKeepTime,
+                data.unBStateVacPressure,
+                data.unBStateVacTime,
+                data.unBreathTimeInterval,
+                data.unPreHeatBreathTimeInterval,
+                data.unPreHeatBreathPreTimes,
+                data.unPreHeatBreathPre,
+                data.OneceunPreHeatBreathPre);
+
+            MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sColHead, sLog);
+        }
+
+        /// <summary>
+        /// 修改参数CSV
+        /// </summary>
+        private void ParameterChangedCsv(string eEx, string section, RunProcess run = null)
+        {
+            DataBaseRecord.UserFormula curUser = new DataBaseRecord.UserFormula();
+            MachineCtrl.GetInstance().dbRecord.GetCurUser(ref curUser);
+            string sFilePath = "D:\\InterfaceOpetate\\ParameterChanged";
+            string sFileName = DateTime.Now.ToString("yyyyMM") + "参数修改.CSV";
+            string sColHead = "修改时间,用户,模组名称,参数名,参数旧值,参数新值";
+
+            string sLog = string.Format("{0},{1},{2},{3},{4},{5}"
+           , DateTime.Now
+           , curUser.userPassword
+           , section
+           , eEx
+           , "True"
+           , "False");
+            MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sColHead, sLog);
+        }
+        #endregion
 
         #region // mes接口
 
@@ -4518,7 +5513,7 @@ namespace Machine
 
             if (!MachineCtrl.GetInstance().ReOvenWait)
             {
-                if (MesUploadBatWaterStatus(nFloorIndex, strFakePltCode[nFloorIndex], strFakeCode[nFloorIndex], fWaterValue, nMinVacm[nFloorIndex], nMaxVacm[nFloorIndex], nMinTemp[nFloorIndex], nMaxTemp[nFloorIndex], (int)cavityData.unVacBkBTime + accVacTime[nFloorIndex], nOvenVacm[nFloorIndex], nOvenTemp[nFloorIndex], 0, (int)cavityData.unVacBreatheCount/*+accVacBakingBreatheCount[nFloorIndex]*/, ref strErr)
+                if (MesUploadBatWaterStatus(nFloorIndex, strFakePltCode[nFloorIndex], strFakeCode[nFloorIndex], fWaterValue, nMinVacm[nFloorIndex], nMaxVacm[nFloorIndex], nMinTemp[nFloorIndex], nMaxTemp[nFloorIndex], (int)cavityData.unVacBkBTime + accVacTime[nFloorIndex], nOvenVacm[nFloorIndex], nOvenTemp[nFloorIndex], 0, (int)cavityData.unVacBreatheCount/*+accVacBakingBreatheCount[nFloorIndex]*/, ref strErr, bisBakingMode[nFloorIndex], cavityData)
                     && MesFirstProduct(nFloorIndex, fWaterValue, nMinVacm[nFloorIndex], nMaxVacm[nFloorIndex], nMinTemp[nFloorIndex], nMaxTemp[nFloorIndex], (int)cavityData.unWorkTime, nOvenVacm[nFloorIndex], nOvenTemp[nFloorIndex], 0))
                 {
                     return true;
@@ -4533,7 +5528,7 @@ namespace Machine
 
             for (int nPalletPos = nFloorIndex * 2; nPalletPos < (nFloorIndex * 2 + 2); nPalletPos++)
             {
-                if (Pallet[nPalletPos].Bat[0, 0].Type != BatType.BKFill && !MesUploadBatWaterStatus(nFloorIndex, Pallet[nPalletPos].Code, Pallet[nPalletPos].Bat[0, 0].Code, fWaterValue, nMinVacm[nFloorIndex], nMaxVacm[nFloorIndex], nMinTemp[nFloorIndex], nMaxTemp[nFloorIndex], (int)cavityData.unVacBkBTime + accVacTime[nFloorIndex], nOvenVacm[nFloorIndex], nOvenTemp[nFloorIndex], 0, (int)cavityData.unVacBreatheCount /*+ accVacBakingBreatheCount[nFloorIndex]*/, ref strErr))
+                if (Pallet[nPalletPos].Bat[0, 0].Type != BatType.BKFill && !MesUploadBatWaterStatus(nFloorIndex, Pallet[nPalletPos].Code, Pallet[nPalletPos].Bat[0, 0].Code, fWaterValue, nMinVacm[nFloorIndex], nMaxVacm[nFloorIndex], nMinTemp[nFloorIndex], nMaxTemp[nFloorIndex], (int)cavityData.unVacBkBTime + accVacTime[nFloorIndex], nOvenVacm[nFloorIndex], nOvenTemp[nFloorIndex], 0, (int)cavityData.unVacBreatheCount /*+ accVacBakingBreatheCount[nFloorIndex]*/, ref strErr, bisBakingMode[nFloorIndex], cavityData))
                 {
                     strInfo = string.Format("{0}号干燥炉{1}号夹具假电芯条码{2}上传水含量失败", (nOvenID + 1), (nPalletPos + 1), Pallet[nPalletPos].Bat[0, 0].Code);
                     strErr += strInfo;
@@ -4956,7 +5951,7 @@ namespace Machine
         /// <summary>
         /// 水含量数据采集
         /// </summary>
-        private bool MesUploadBatWaterStatus(int nCurFinishFlowID, string strJigCode, string strBatteryCode, float[] fWater, int nMinVacmEx, int nMaxVacmEx, double nMinTempEx, double nMaxTempEx, int nBkBTime, int nOvenVacm, double nOvenTemp, int nPos, int nBreathCount, ref string strErr)
+        private bool MesUploadBatWaterStatus(int nCurFinishFlowID, string strJigCode, string strBatteryCode, float[] fWater, int nMinVacmEx, int nMaxVacmEx, double nMinTempEx, double nMaxTempEx, int nBkBTime, int nOvenVacm, double nOvenTemp, int nPos, int nBreathCount, ref string strErr, bool bIsUploadWater, CavityData cavityData = null)
         {
             if (!MachineCtrl.GetInstance().UpdataMES)
             {
@@ -4975,7 +5970,8 @@ namespace Machine
             strValue[1] = string.Format("{0}", fWater[0]);
             strValue[2] = string.Format("{0}", fWater[1]);
             strValue[3] = string.Format("{0}", nPos);
-            string[] strValue2 = new string[10];
+            string[] strValue2 = new string[14];
+            string sVacBreatheCount = curCavityData[nCurFinishFlowID].unVacBreatheCount.ToString();
             strValue2[0] = nMinVacmEx.ToString(); //最小真空
             strValue2[1] = nMaxVacmEx.ToString();//最大真空
             strValue2[2] = nMinTempEx.ToString(); //最小温度
@@ -4986,6 +5982,16 @@ namespace Machine
             strValue2[7] = (curCavityData[nCurOperatRow].unPreHeatTime1 + curCavityData[nCurOperatRow].unPreHeatTime2).ToString();
             strValue2[8] = strJigCode;
             strValue2[9] = nBreathCount.ToString();
+
+            strValue2[10] = bgCavityData[nCurOperatRow].unProcessPISValues.ToString(); // unPISValue.ToString();//PIS值
+            strValue2[11] = cavityData.unProcessSpecification.ToString();     //过程规格值
+            strValue2[12] = cavityData.unMinProcessPISValues.ToString();     //最小pis值
+            strValue2[13] = cavityData.unWaterSpecificationValues.ToString();     //水含量规格值
+
+            bool[] bValue3 = new bool[2];
+            bValue3[0] = bgCavityData[nCurOperatRow].unIsHasProcessPIS == OvenProcessPISState.Have ? true : false;
+            bValue3[1] = bIsUploadWater;     //是否测试水含量
+
             string[] strTimeValue = new string[4];
             // float fWorkTime = curCavityData[nCurFinishFlowID].unWorkTime / 60f;
             float fWorkTime = curCavityData[nCurFinishFlowID].unWorkTime;
@@ -4995,7 +6001,7 @@ namespace Machine
             strTimeValue[3] = arrVacStartValue[nCurFinishFlowID].ToString();
 
             string strLog = "";
-            string[] mesParam = new string[29];
+            string[] mesParam = new string[35];
             string strCallMESTime_Start = DateTime.Now.ToString("T");
             int dwStrTime = DateTime.Now.Millisecond;
 
@@ -5007,12 +6013,13 @@ namespace Machine
                 strOvenNO,
                 ref nCode,
                 ref strErr,
-                ref mesParam);
+                ref mesParam,
+                bValue3);
 
             int dwEndTime = DateTime.Now.Millisecond;
             string strCallMESTime_End = DateTime.Now.ToString("T");
 
-            strLog = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28},{29},{30},{31},{32},{33},{34},{35},{36},{37},{38},{39}"
+            strLog = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21},{22},{23},{24},{25},{26},{27},{28},{29},{30},{31},{32},{33},{34},{35},{36},{37},{38},{39},{40},{41},{42},{43},{44}"
                  , mesParam[0]
                  , mesParam[1]
                  , mesParam[2]
@@ -5039,6 +6046,11 @@ namespace Machine
                  , mesParam[25]
                  , mesParam[26]
                  , mesParam[27]
+                 , mesParam[29]
+                 , mesParam[30]
+                 , mesParam[31]
+                 , mesParam[32]
+                 , mesParam[33]
                  , MachineCtrl.GetInstance().strResourceID[nOvenID]
                  , nOvenID + 1
                  , Convert.ToString((nCurFinishFlowID + 10), 16).ToUpper()
@@ -5055,6 +6067,9 @@ namespace Machine
                  , mesParam[28]);
 
             MachineCtrl.GetInstance().MesReport(MESINDEX.MesJigdataCollect, strLog);
+
+            string resultmessage = ((string.IsNullOrEmpty(strErr)) ? "OK" : strErr);
+            SaveWaterValueCSV(nCurOperatRow, bgCavityData[nCurOperatRow], nCode, resultmessage, fWater, sVacBreatheCount, Pallet[2 * nCurFinishFlowID].StartTime, Pallet[2 * nCurFinishFlowID].EndTime, curCavityData[nCurFinishFlowID].unWorkTime.ToString(), strBatteryCode);
 
             return (bWaterCollect && nCode == 0);
         }

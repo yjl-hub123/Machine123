@@ -29,5 +29,8 @@
     <Setting Name="Machine_MiMESIntegrationForParameterValueIssueServiceService_MiMESIntegrationForParameterValueIssueServiceService" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">http://gacmes1p024.catlgac.cn:50400/atlmeswebservice/MiMESIntegrationForParameterValueIssueServiceService</Value>
     </Setting>
+    <Setting Name="Machine_MiFindCustomAndSfcDataServiceService_MiFindCustomAndSfcDataServiceService" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://gacmes1p022.catlgac.cn:50200/atlmeswebservice/MiFindCustomAndSfcDataServiceService</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

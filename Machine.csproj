@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Machine</RootNamespace>
     <AssemblyName>Machine</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -318,6 +318,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
+    <Compile Include="Web References\MiFindCustomAndSfcDataServiceService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Web References\MiMESIntegrationForParameterValueIssueServiceService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -621,6 +626,14 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
+    <None Include="Web References\MiFindCustomAndSfcDataServiceService\miFindCustomAndSfcDataResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MiFindCustomAndSfcDataServiceService\MiFindCustomAndSfcDataServiceService.wsdl" />
+    <None Include="Web References\MiFindCustomAndSfcDataServiceService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
     <None Include="Web References\MiMESIntegrationForParameterValueIssueServiceService\MiMESIntegrationForParameterValueIssueServiceService.wsdl" />
     <None Include="Web References\MiMESIntegrationForParameterValueIssueServiceService\Reference.map">
       <Generator>MSDiscoCodeGenerator</Generator>
@@ -806,6 +819,17 @@
       </CachedDynamicPropName>
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>Machine_DataCollectForResourceFAIService_DataCollectForResourceFAIServiceService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://cgbcmes1.catlgac.cn:8103/atlmeswebservice/MiFindCustomAndSfcDataServiceService%3fwsdl">
+      <UrlBehavior>Dynamic</UrlBehavior>
+      <RelPath>Web References\MiFindCustomAndSfcDataServiceService\</RelPath>
+      <UpdateFromURL>http://cgbcmes1.catlgac.cn:8103/atlmeswebservice/MiFindCustomAndSfcDataServiceService%3fwsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>Machine_MiFindCustomAndSfcDataServiceService_MiFindCustomAndSfcDataServiceService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://cgbcmes1.catlgac.cn:8103/atlmeswebservice/MiMESIntegrationForParameterValueIssueServiceService%3fwsdl">
       <UrlBehavior>Dynamic</UrlBehavior>

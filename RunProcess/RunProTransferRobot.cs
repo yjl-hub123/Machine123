@@ -438,6 +438,8 @@ namespace Machine
                     {
                         CurMsgStr("等待开始信号", "Wait work start");
 
+                        OvenAllowUpload();
+
                         bool bCalcResult = false;
 
                         // 人工操作平台放托盘
@@ -1289,11 +1291,13 @@ namespace Machine
                                     RunProcess run = null;
                                     if (GetModuleByStation(PlaceAction.station, ref run))
                                     {
-                                        if(Pallet[(int)ModuleDef.Pallet_0].IsEmpty())
+                                        if (Pallet[(int)ModuleDef.Pallet_0].IsEmpty())
                                         {
                                             Pallet[(int)ModuleDef.Pallet_0].Code = "";
+                                            Pallet[(int)ModuleDef.Pallet_0].NBakCount = 0;
+                                            Pallet[(int)ModuleDef.Pallet_0].IsCancelFake = false;
                                         }
-                                      
+
                                         run.Pallet[PlaceAction.col].CopyFrom(Pallet[(int)ModuleDef.Pallet_0]);
                                         Pallet[(int)ModuleDef.Pallet_0].Release();
                                         run.SaveRunData(SaveType.Pallet, PlaceAction.col);
@@ -2983,6 +2987,11 @@ namespace Machine
                             {
                                 nOvenID = nSortDryingOvenFloor[i] / (int)ModuleRowCol.DryingOvenRow;
                                 nRow = nSortDryingOvenFloor[i] % (int)ModuleRowCol.DryingOvenRow;
+
+                                pDryOven = arrDryingOven[nOvenID];
+                                if (ModuleEvent.OvenPickDetectPlt == eEvent && pDryOven.bisBakingMode[nRow] && !pDryOven.bFlagbit[nRow])
+                                    continue;
+
                                 if (SearchOvenPickPosEx(modeIdx, eEvent, nOvenID, nRow, ref nCol))
                                 {
                                     return true;
@@ -3029,15 +3038,28 @@ namespace Machine
                     }
                     else
                     {
-                        // 干燥炉放上料完成OK满托盘 || 干燥炉放上料完成OK带假电池满托盘
-                        if (ModuleEvent.OvenPlaceFullPlt == eEvent || ModuleEvent.OvenPlaceFakeFullPlt == eEvent)
+                        // 干燥炉取待检测含假电池托盘（未取走假电池的托盘）
+                        if (ModuleEvent.OvenPickDetectPlt == eEvent)
                         {
-                            int[] nIdx = new int[10] { 5, 9, 4, 8, 3, 7, 2, 6, 1, 0 };
-                            for (int nOvenArrayIdx = 0; nOvenArrayIdx < nIdx.Length; nOvenArrayIdx++)
+                            if (CalcPriorityOffLoadPlace(ref nOvenID, ref nRow, false))
                             {
-                                if (SearchOvenPlacePos(modeIdx, eEvent, nIdx[nOvenArrayIdx], ref nRow, ref nCol))
+                                pDryOven = arrDryingOven[nOvenID];
+                                if (ModuleEvent.OvenPickDetectPlt == eEvent && pDryOven.bisBakingMode[nRow] && !pDryOven.bFlagbit[nRow])
+                                { continue; }
+
+                                if (SearchOvenPickPosEx(modeIdx, eEvent, nOvenID, nRow, ref nCol))
                                 {
-                                    nOvenID = arrDryingOven[nIdx[nOvenArrayIdx]].GetOvenID();
+                                    return true;
+                                }
+                            }
+
+                        }
+                        else if (ModuleEvent.OvenPickOffloadPlt == eEvent)// 干燥炉取待下料托盘（干燥完成托盘）
+                        {
+                            if (CalcPriorityOffLoadPlace(ref nOvenID, ref nRow))
+                            {
+                                if (SearchOvenPickPosEx(modeIdx, eEvent, nOvenID, nRow, ref nCol))
+                                {
                                     return true;
                                 }
                             }
@@ -3736,7 +3758,8 @@ namespace Machine
                         case ModuleEvent.OvenPickDetectPlt:
                             {
                                 if (CavityState.Detect == curOven.GetCavityState(nRowIdx) && !curOven.IsTransfer(nRowIdx) && curPlt.IsType(PltType.Detect)
-                                    && curPlt.IsStage(PltStage.Onload) && PltHasTypeBat(curPlt, BatType.Fake) && !PltIsEmpty(curPlt))
+                                    && curPlt.IsStage(PltStage.Onload) && PltHasTypeBat(curPlt, BatType.Fake) && !PltIsEmpty(curPlt)
+                                    && !curOven.bisBakingMode[nRowIdx] && curOven.bFlagbit[nRowIdx])
                                 {
                                     nCol = nColIdx;
                                     return true;
@@ -3914,7 +3937,8 @@ namespace Machine
                         case ModuleEvent.OvenPickDetectPlt:
                             {
                                 if (CavityState.Detect == curOven.GetCavityState(nRowIdx) && !curOven.IsTransfer(nRowIdx) && curPlt.IsType(PltType.Detect)
-                                    && curPlt.IsStage(PltStage.Onload) && PltHasTypeBat(curPlt, BatType.Fake) && !PltIsEmpty(curPlt))
+                                    && curPlt.IsStage(PltStage.Onload) && PltHasTypeBat(curPlt, BatType.Fake) && !PltIsEmpty(curPlt) &&
+                                    !curOven.bisBakingMode[nRowIdx] && curOven.bFlagbit[nRowIdx])
                                 {
                                     nCol = nColIdx;
                                     return true;
@@ -4029,6 +4053,10 @@ namespace Machine
                             if (curOven.IsCavityEN(nRowIdx) && !curOven.IsPressure(nRowIdx) && !curOven.IsTransfer(nRowIdx) &&
                                 (CavityState.Standby == curOven.GetCavityState(nRowIdx)))
                             {
+                                if ((eEvent == ModuleEvent.OvenPlaceFullPlt || eEvent == ModuleEvent.OvenPlaceFakeFullPlt) &&
+                                    !curOven.OvenAbnormalState(nRowIdx))
+                                        continue;
+
                                 if (rowPlt[0].IsType(PltType.Invalid) && rowPlt[1].IsType(PltType.Invalid))
                                 {
                                     nRow = nRowIdx;
@@ -4050,6 +4078,10 @@ namespace Machine
                             if (curOven.IsCavityEN(nRowIdx) && !curOven.IsPressure(nRowIdx) && !curOven.IsTransfer(nRowIdx) &&
                                 (CavityState.Standby == curOven.GetCavityState(nRowIdx)))
                             {
+                                if ((eEvent == ModuleEvent.OvenPlaceFullPlt || eEvent == ModuleEvent.OvenPlaceFakeFullPlt) &&
+                                    !curOven.OvenAbnormalState(nRowIdx))
+                                    continue;
+
                                 if ((rowPlt[0].IsType(PltType.Invalid) && (PltIsEmpty(rowPlt[1]) || rowPlt[1].IsType(PltType.NG) || rowPlt[1].IsType(PltType.WaitOffload))) || 
                                     (rowPlt[1].IsType(PltType.Invalid) && (PltIsEmpty(rowPlt[0]) || rowPlt[0].IsType(PltType.NG) || rowPlt[0].IsType(PltType.WaitOffload))))
                                 {
@@ -5176,5 +5208,168 @@ namespace Machine
             MachineCtrl.GetInstance().WriteCSV(sFilePath, sFileName, sColHead, sLog);
         }
         #endregion
+
+        /// <summary>
+        ///  调度搜索那个炉子先烤完 满足上传水含量要求
+        /// </summary>
+        private void OvenAllowUpload()
+        {
+            RunProDryingOven pDryOven = null;
+            int nWaitOffFloorCount = 0;
+            int nCount = 0;
+            for (int nOven = 0; nOven < arrDryingOven.Length; nOven++)
+            {
+                pDryOven = arrDryingOven[nOven];
+                if (null != pDryOven)
+                {
+                    for (int nFloor = 0; nFloor < (int)ModuleRowCol.DryingOvenRow; nFloor++)
+                    {
+                        if (pDryOven.Pallet[2 * nFloor + 0].Type == PltType.WaitOffload
+                            || pDryOven.Pallet[2 * nFloor + 1].Type == PltType.WaitOffload)
+                        {
+                            nWaitOffFloorCount++; // 计算炉腔下料数量,超过设定数量不上传不测假电池的水含量(自动上传) 
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < offloadRobot.Pallet.Length; i++)
+            {
+                if (offloadRobot.Pallet[i].Type == PltType.WaitOffload)
+                {
+                    nCount++; // 计算炉腔下料结果，超过设定数量不上传不测假电池的水含量(自动上传)  下料算一个数量
+                }
+            }
+
+            for (int i = 0; i < palletBuf.Pallet.Length; i++)
+            {
+                if (palletBuf.Pallet[i].Type == PltType.WaitOffload)
+                {
+                    nCount++; // 计算炉腔下料结果，超过设定数量不上传不测假电池的水含量(自动上传) 
+                }
+            }
+            // 双数除2 单数除2+1
+            nWaitOffFloorCount += nCount % 2 == 0 ? nCount / 2 : (nCount / 2) + 1;
+
+
+            // 提前出炉模式 不让发送上传水含量
+            if (nWaitOffFloorCount <= MachineCtrl.GetInstance().MaxWaitUpLoadCount)
+            {
+                // 设定的数量减去下料数量 比如当前只有1层在下料，设定的是2 2-1循环一次 把一个炉子设置自动上传水含量
+                for (int i = 0; i < MachineCtrl.GetInstance().MaxWaitUpLoadCount - nWaitOffFloorCount; i++)
+                {
+                    // 先烘烤完先上传水含量下料
+                    int[] nSortDryingOvenFloor = new int[arrDryingOven.Length * (int)ModuleRowCol.DryingOvenRow];
+                    DryingOvenStartTimeSort(ref nSortDryingOvenFloor);
+                    for (int j = 0; j < arrDryingOven.Length * (int)ModuleRowCol.DryingOvenRow; j++)
+                    {
+                        int nOvenID = nSortDryingOvenFloor[j] / (int)ModuleRowCol.DryingOvenRow;
+                        int nRow = nSortDryingOvenFloor[j] % (int)ModuleRowCol.DryingOvenRow;
+
+                        pDryOven = arrDryingOven[nOvenID]; //炉号
+
+                        //  // 提前出炉跳工艺(不测假电池) && 使能打开 && 炉腔状态是待上传 && 获取到的水含量大于0
+                        if (pDryOven.bisBakingMode[nRow] && pDryOven.IsCavityEN(nRow) && pDryOven.GetCavityState(nRow) == CavityState.WaitRes && pDryOven.GetWaterContent(nRow) > 0)
+                        {
+                            // 托盘状态是待上传
+                            if (pDryOven.Pallet[2 * nRow + 0].Type == PltType.WaitRes && pDryOven.Pallet[2 * nRow + 1].Type == PltType.WaitRes)
+                            {
+                                pDryOven.bAllowUpload[nRow] = true;
+                                pDryOven.SaveRunData(SaveType.MaxMinValue);
+                                break;
+                            }
+                        }
+
+                    }
+                }
+            }
+            Sleep(50);
+        }
+
+
+        /// <summary>
+        /// 计算优先取下料托盘炉号 层
+        /// </summary>
+        /// <param name="curOven"></param>
+        /// <param name="nRow"></param>
+        /// <param name="isOffLoad"></param>
+        /// <returns></returns>
+        private bool CalcPriorityOffLoadPlace(ref int curOven, ref int nRow, bool isOffLoad = true)
+        {
+            RunProDryingOven pDryOvenArr = null;
+            Dictionary<(int, int), DateTime> offLoadOven = new Dictionary<(int, int), DateTime>();//炉子,层，时间
+            for (int nOven = 0; nOven < arrDryingOven.Length; nOven++)
+            {
+                pDryOvenArr = arrDryingOven[nOven];
+                if (null != pDryOvenArr)
+                {
+                    for (int nFloor = 0; nFloor < (int)ModuleRowCol.DryingOvenRow; nFloor++)
+                    {
+                        Pallet ovenPlt1 = pDryOvenArr.Pallet[nFloor * 2 + 0];
+                        Pallet ovenPlt2 = pDryOvenArr.Pallet[nFloor * 2 + 1];
+
+                        if (isOffLoad)
+                        {
+                            if (false == pDryOvenArr.IsCavityEN(nFloor) || true == pDryOvenArr.IsPressure(nFloor)) continue;
+
+                            if (ovenPlt1.Type == PltType.WaitOffload || ovenPlt2.Type == PltType.WaitOffload)
+                            {
+                                offLoadOven.Add((nOven, nFloor), pDryOvenArr.UploadWaterTime[nFloor]);
+                            }
+                            //else
+                            //{
+                            //    Pallet pal1 = pDryOvenArr.ByModuleGetOvenRelatedPallet(palletBuf, pDryOvenArr.GetOvenID(), nFloor, 0);
+                            //    Pallet pal2 = pDryOvenArr.ByModuleGetOvenRelatedPallet(manualOperat, pDryOvenArr.GetOvenID(), nFloor, 1);
+                            //    if (pal1 != null && pal1.Type == PltType.WaitOffload)
+                            //    {
+                            //        offLoadOven.Add((nOven, nFloor), pDryOvenArr.UploadWaterTime[nFloor]);
+                            //    }
+                            //    else if (pal2 != null && pal2.Type == PltType.WaitOffload)
+                            //    {
+                            //        offLoadOven.Add((nOven, nFloor), pDryOvenArr.UploadWaterTime[nFloor]);
+                            //    }
+                            //}
+
+                        }
+                        else
+                        {
+                            if (pDryOvenArr.cavityState[nFloor] != CavityState.Detect || false == pDryOvenArr.IsCavityEN(nFloor) || true == pDryOvenArr.IsPressure(nFloor)) continue;
+                            if ((ovenPlt1.Type == PltType.Detect && ovenPlt2.Type == PltType.Detect))
+                            {
+                                offLoadOven.Add((nOven, nFloor), pDryOvenArr.GetStartTime(nFloor));
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            if (offLoadOven.Count > 0)
+            {
+
+                //// 升序烘烤开始时间
+                //var offLoadOvenArr = offLoadOven.OrderBy(o => o.Key).ToDictionary(o => o.Key, p => p.Value).Values;
+
+                //foreach (var item in offLoadOvenArr)
+                //{
+                //    // 已烘烤出炉标识
+                //    (int Oven, int Row) = offLoadOven.FirstOrDefault(q => q.Value == item).Key;
+                //    if (arrDryingOven[Oven].bFlagbit[Row])
+                //    {
+                //        curOven = Oven;
+                //        nRow = Row;
+                //        return true;
+                //    }
+                //}
+
+                (int Oven, int Row) = offLoadOven.OrderBy(p => p.Value).First().Key;
+                curOven = Oven;
+                nRow = Row;
+                return true;
+            }
+            return false;
+        }
     }
 }

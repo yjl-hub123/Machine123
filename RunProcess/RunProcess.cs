@@ -507,6 +507,9 @@ namespace Machine
 
                     key = string.Format("Battery[{0},{1}].Code", nRowIdx, nColIdx);
                     Battery[nRowIdx, nColIdx].Code = FileStream.ReadString(section, key, Battery[nRowIdx, nColIdx].Code);
+
+                    key = string.Format("Battery[{0},{1}].MarkingType", nRowIdx, nColIdx);
+                    Battery[nRowIdx, nColIdx].MarkingType = FileStream.ReadString(section, key, Battery[nRowIdx, nColIdx].MarkingType);
                 }
             }
 
@@ -555,6 +558,12 @@ namespace Machine
                 key = string.Format("Pallet[{0}].PosInOven.OvenColID", nPltIdx);
                 this.Pallet[nPltIdx].PosInOven.OvenColID = FileStream.ReadInt(section, key, (int)this.Pallet[nPltIdx].PosInOven.OvenColID);
 
+                key = string.Format("Pallet[{0}].IsCancelFake", nPltIdx);
+                this.Pallet[nPltIdx].IsCancelFake = FileStream.ReadBool(section, key, this.Pallet[nPltIdx].IsCancelFake);
+
+                key = string.Format("Pallet[{0}].NBakCount", nPltIdx);
+                this.Pallet[nPltIdx].NBakCount = FileStream.ReadInt(section, key, this.Pallet[nPltIdx].NBakCount);
+
                 // 电池数据
                 for (int nRowIdx = 0; nRowIdx < Pallet[nPltIdx].Bat.GetLength(0); nRowIdx++)
                 {
@@ -568,6 +577,9 @@ namespace Machine
 
                         key = string.Format("Pallet[{0}].Bat[{1},{2}].Code", nPltIdx, nRowIdx, nColIdx);
                         Pallet[nPltIdx].Bat[nRowIdx, nColIdx].Code = FileStream.ReadString(section, key, Pallet[nPltIdx].Bat[nRowIdx, nColIdx].Code);
+
+                        key = string.Format("Pallet[{0}].Bat[{1},{2}].MarkingType", nPltIdx, nRowIdx, nColIdx);
+                        Pallet[nPltIdx].Bat[nRowIdx, nColIdx].MarkingType = FileStream.ReadString(section, key, Pallet[nPltIdx].Bat[nRowIdx, nColIdx].MarkingType);
                     }
                 }
             }
@@ -632,6 +644,9 @@ namespace Machine
 
                         key = string.Format("Battery[{0},{1}].Code", nRowIdx, nColIdx);
                         FileStream.WriteString(section, key, Battery[nRowIdx, nColIdx].Code);
+
+                        key = string.Format("Battery[{0},{1}].MarkingType", nRowIdx, nColIdx);
+                        FileStream.WriteString(section, key, Battery[nRowIdx, nColIdx].MarkingType);
                     }
                 }
             }
@@ -684,6 +699,12 @@ namespace Machine
 
                         key = string.Format("Pallet[{0}].PosInOven.OvenColID", nPltIdx);
                         FileStream.WriteInt(section, key, this.Pallet[nPltIdx].PosInOven.OvenColID);
+
+                        key = string.Format("Pallet[{0}].IsCancelFake", nPltIdx);
+                        FileStream.WriteBool(section, key, this.Pallet[nPltIdx].IsCancelFake);
+
+                        key = string.Format("Pallet[{0}].NBakCount", nPltIdx);
+                        FileStream.WriteInt(section, key, (int)this.Pallet[nPltIdx].NBakCount);
                         // 电池数据
                         for (int nRowIdx = 0; nRowIdx < Pallet[nPltIdx].Bat.GetLength(0); nRowIdx++)
                         {
@@ -697,6 +718,9 @@ namespace Machine
 
                                 key = string.Format("Pallet[{0}].Bat[{1},{2}].Code", nPltIdx, nRowIdx, nColIdx);
                                 FileStream.WriteString(section, key, Pallet[nPltIdx].Bat[nRowIdx, nColIdx].Code);
+
+                                key = string.Format("Pallet[{0}].Bat[{1},{2}].MarkingType", nPltIdx, nRowIdx, nColIdx);
+                                FileStream.WriteString(section, key, Pallet[nPltIdx].Bat[nRowIdx, nColIdx].MarkingType);
                             }
                         }
                     }

@@ -44,6 +44,7 @@
             this.CheckSFCStatus = new System.Windows.Forms.TabPage();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.releaseTray = new System.Windows.Forms.TabPage();
+            this.miFindCustomAndSfcData = new System.Windows.Forms.TabPage();
             this.tabControl.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -207,6 +208,7 @@
             this.tabControl.Controls.Add(this.tabFProductPage);
             this.tabControl.Controls.Add(this.IntegrationForParameterValueIssue);
             this.tabControl.Controls.Add(this.releaseTray);
+            this.tabControl.Controls.Add(this.miFindCustomAndSfcData);
             this.tabControl.Controls.Add(this.tabPageWaterContent);
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.Font = new System.Drawing.Font("宋体", 11F);
@@ -229,6 +231,18 @@
             this.releaseTray.TabIndex = 14;
             this.releaseTray.Text = "托盘解绑";
             this.releaseTray.UseVisualStyleBackColor = true;
+
+            // 
+            // 
+            // miFindCustomAndSfcData
+            // 
+            this.miFindCustomAndSfcData.Location = new System.Drawing.Point(4, 34);
+            this.miFindCustomAndSfcData.Name = "miFindCustomAndSfcData";
+            this.miFindCustomAndSfcData.Size = new System.Drawing.Size(889, 471);
+            this.miFindCustomAndSfcData.TabIndex = 13;
+            this.miFindCustomAndSfcData.Text = "sfc数据收集与过站（查看异常Marking类型）";
+            this.miFindCustomAndSfcData.UseVisualStyleBackColor = true;
+
             // 
             // MesSetPage
             // 
@@ -262,5 +276,6 @@
         private System.Windows.Forms.TabPage CheckSFCStatus;
         private System.Windows.Forms.TabControl tabControl;
         private System.Windows.Forms.TabPage releaseTray;
+        private System.Windows.Forms.TabPage miFindCustomAndSfcData;
     }
 }

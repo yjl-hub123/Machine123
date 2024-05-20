@@ -26,6 +26,7 @@ namespace Machine
         private MesPage MesmiCloseNcAndProcess;
         private MesPage MesIntegrationForParameterValueIssue;
         private MesPage MesReleaseTray;
+        private MesPage MesmiFindCustomAndSfcData;
         #endregion
         public MesSetPage()
         {
@@ -143,6 +144,14 @@ namespace Machine
             MesReleaseTray.Show();
             this.releaseTray.Controls.Add(MesReleaseTray);
 
+            //making电芯校验
+            MesmiFindCustomAndSfcData = new MesPage();
+            MesmiFindCustomAndSfcData.TopLevel = false;
+            MesmiFindCustomAndSfcData.Dock = DockStyle.Fill;
+            MesmiFindCustomAndSfcData.Show();
+            this.miFindCustomAndSfcData.Controls.Add(MesmiFindCustomAndSfcData);
+
+
             foreach (Control item in this.tabControl.Controls)
             {
                 item.BackColor = Color.Transparent;
@@ -204,6 +213,9 @@ namespace Machine
                     break;
                 case (int)MESINDEX.MesReleaseTray:
                     MesReleaseTray.SetPageID(Index);
+                    break;
+                case (int)MESINDEX.MesmiFindCustomAndSfcData:
+                    MesmiFindCustomAndSfcData.SetPageID(Index);
                     break;
                 default:
                     break;

@@ -240,6 +240,15 @@ namespace Machine
                     // 系统参数检查
                     if (MachineCtrl.GetInstance().CheckParameter(e.ChangedItem.PropertyDescriptor.Name, e.ChangedItem.Value))
                     {
+                        if ("MarkingType" == e.ChangedItem.PropertyDescriptor.Name && e.ChangedItem.Value.Equals(string.Empty))
+                        {
+                            // 异常Marking
+                            MachineCtrl.GetInstance().WriteParameter("System", e.ChangedItem.PropertyDescriptor.Name, ";");
+                        }
+                        else
+                        {
+                            MachineCtrl.GetInstance().WriteParameter("System", e.ChangedItem.PropertyDescriptor.Name, e.ChangedItem.Value.ToString());
+                        }
                         MachineCtrl.GetInstance().WriteParameter("System", e.ChangedItem.PropertyDescriptor.Name, e.ChangedItem.Value.ToString());
                         MachineCtrl.GetInstance().ReadParameter();
                         ParameterChangedCsv(e, "系统");
@@ -494,7 +503,27 @@ namespace Machine
                     ((RunProDryingOven)run).SaveRunData(SaveType.Variables);
                 }
             }
-			
+            else if (eEx.ChangedItem.PropertyDescriptor.Name.ToString().Contains("ClearAbnormalAlarm"))
+            {
+                string str = eEx.ChangedItem.PropertyDescriptor.Name.ToString().Replace("ClearAbnormalAlarm", "");
+
+                if (eEx.ChangedItem.Value.ToString() == "False")
+                {
+                    ((RunProDryingOven)run).SetCurOvenRest("", Convert.ToInt32(str) - 1);
+
+                    CavityData cavity = new CavityData();
+                    cavity.unAbnormalAlarm = ovenAbnormalAlarm.OK;
+                    ((RunProDryingOven)run).OvenAbnormalAlarm(Convert.ToInt32(str) - 1, cavity);
+
+                }
+
+                MCState nState = MachineCtrl.GetInstance().RunsCtrl.GetMCState();
+                if (nState == MCState.MCStopRun)
+                {
+                    ((RunProDryingOven)run).SaveRunData(SaveType.Variables);
+                }
+            }
+
             string sLog = string.Format("{0},{1},{2},{3},{4},{5}"
                 , DateTime.Now
                 , curUser.userName
