@@ -1,5 +1,7 @@
 ﻿
 
+using System.Collections.Generic;
+
 namespace Machine
 {
     /// <summary>
@@ -56,6 +58,8 @@ namespace Machine
         private string startTime;           // 开始时间
         private string endTime;             // 结束时间
         private PositionInOven posInOven;   // 料盘在炉区的具体位置
+        private bool isCancelFake;          // 是否取消假电池
+        private int nNBakCount;             // 当前托盘烘烤次数
 
         #endregion
 
@@ -120,6 +124,37 @@ namespace Machine
                 this.isOnloadFake = value;
             }
         }
+
+        /// <summary>
+        /// 取消假电池模式
+        /// </summary>
+        public bool IsCancelFake
+        {
+            get
+            {
+                return this.isCancelFake;
+            }
+            set
+            {
+                this.isCancelFake = value;
+            }
+        }
+
+        /// <summary>
+        /// 当前托盘烘烤次数
+        /// </summary>
+        public int NBakCount
+        {
+            get
+            {
+                return this.nNBakCount;
+            }
+            set
+            {
+                this.nNBakCount = value;
+            }
+        }
+
 
         /// <summary>
         /// 托盘类型
@@ -294,7 +329,7 @@ namespace Machine
             ColCount = (int)PltRowCol.MaxCol;
             Bat = new Battery[RowCount, ColCount];
             PosInOven = new PositionInOven();
-
+            NBakCount = 0;
             for (int nRowIdx = 0; nRowIdx < Bat.GetLength(0); nRowIdx++)
             {
                 for (int nColIdx = 0; nColIdx < Bat.GetLength(1); nColIdx++)
@@ -324,6 +359,8 @@ namespace Machine
                     {
                         Code = plt.Code;
                         IsOnloadFake = plt.IsOnloadFake;
+                        IsCancelFake = plt.IsCancelFake;
+                        NBakCount = plt.NBakCount;
                         Type = plt.Type;
                         Stage = plt.Stage;
                         RowCount = plt.RowCount;
@@ -358,6 +395,8 @@ namespace Machine
             {
                 Code = "";
                 IsOnloadFake = false;
+                IsCancelFake = false;
+                NBakCount = 0;
                 Type = PltType.Invalid;
                 Stage = PltStage.Invalid;
                 SrcStation = -1;
@@ -417,6 +456,38 @@ namespace Machine
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// 满托盘个数统计
+        /// </summary>
+        public bool IsFullCount(ref int batCount)
+        {
+            return true;
+            lock (lockPlt)
+            {
+                //获得托电芯个数
+
+                //获得托盘行列
+                int pltMaxRow = 0;
+                int pltMaxCol = 0;
+                MachineCtrl.GetInstance().GetPltRowCol(ref pltMaxRow, ref pltMaxCol);
+                foreach (Battery tmpBat in Bat)
+                {
+                    if (tmpBat.IsType(BatType.OK) || tmpBat.IsType(BatType.Fake))
+                    {
+                        batCount++;
+
+                    }
+                }
+
+                // 个数 大于等于托盘数-1 
+                if (batCount >= ((pltMaxRow * pltMaxCol) - 1))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -543,6 +614,134 @@ namespace Machine
             }
         }
 
+        /// <summary> 检查托盘是否有异常Marking值
+        /// 
+        /// </summary>
+        /// <returns>有异常返回False 无异常返回True</returns>
+        public bool HasTypeBatMarking(string MarkingValue)
+        {
+            //lock (lockPlt)
+            //{
+            var MarkingType = MarkingValue.Split(';');
+            string[] MarkingProlong = new string[MarkingType.Length];
+
+            // 获取Marking
+            for (int i = 0; i < MarkingType.Length; i++)
+            {
+                int Index = MarkingType[i].IndexOf('-');
+                if (Index != -1)
+
+                    MarkingProlong[i] = MarkingType[i].Substring(0, Index);
+                else
+                    MarkingProlong[i] = MarkingType[i];
+
+            }
+
+            for (int nRowIdx = 0; nRowIdx < Bat.GetLength(0); nRowIdx++)
+            {
+                for (int nColIdx = 0; nColIdx < Bat.GetLength(1); nColIdx++)
+                {
+                    if (Bat[nRowIdx, nColIdx].MarkingType == null || Bat[nRowIdx, nColIdx].MarkingType == string.Empty)
+                    {
+                        continue;
+                    }
+
+                    var MarkingArraay = Bat[nRowIdx, nColIdx].MarkingType.Split(';');
+                    // 都有marking
+
+                    for (int i = 0; i < MarkingArraay.Length; i++)  //电芯marking去比对本地配置的marking
+                    {
+
+                        for (int j = 0; j < MarkingProlong.Length; j++) //本地配置marking
+                        {
+                            // 防止本地的空marking 直接跳过
+                            if (MarkingProlong[j].Trim().Equals(string.Empty)) continue;
+
+                            if (MarkingProlong[j].Trim().Equals(MarkingArraay[i].Trim())) //和配置marking一样
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                //      }
+            }
+
+            return true;
+        }
+
+
+        /// <summary> 检查托盘是否有异常Marking值
+        /// 
+        /// </summary>
+        /// <returns>有异常返回False 无异常返回True</returns>
+        public bool HasTypeBatMarking(string MarkingValue, List<string> MarkingRecords, ref int ProLongTime)
+        {
+
+            var MarkingType = MarkingValue.Split(';');
+            Dictionary<string, int> MarkingProlong = new Dictionary<string, int>();
+            bool flag = true;
+            // 获取延迟时间
+            for (int i = 0; i < MarkingType.Length; i++)
+            {
+                int Index = MarkingType[i].IndexOf('-');
+
+                //防止重复添加key导致报错
+                if (MarkingProlong.ContainsKey(MarkingType[i])) continue; 
+
+                if (Index != -1)
+                    MarkingProlong.Add(MarkingType[i].Substring(0, Index), int.Parse(MarkingType[i].Substring(Index + 1)));
+                else
+                    MarkingProlong.Add(MarkingType[i], 0);
+
+            }
+
+            for (int nRowIdx = 0; nRowIdx < Bat.GetLength(0); nRowIdx++)
+            {
+                for (int nColIdx = 0; nColIdx < Bat.GetLength(1); nColIdx++)
+                {
+                    if (Bat[nRowIdx, nColIdx].MarkingType == null || Bat[nRowIdx, nColIdx].MarkingType == string.Empty)
+                    {
+                        continue;
+                    }
+
+                    var MarkingArraay = Bat[nRowIdx, nColIdx].MarkingType.Split(';');
+                    // 都有marking
+
+                    for (int i = 0; i < MarkingArraay.Length; i++)  //电芯marking去比对本地配置的marking
+                    {
+                        foreach (var item in MarkingProlong.Keys)
+                        {
+                            // 防止本地的空marking 直接跳过
+                            if (item.Trim().Equals(string.Empty)) continue;
+
+                            if (item.Trim().Equals(MarkingArraay[i].Trim())) //和配置marking一样
+                            {
+                                flag = false;
+
+                                // 防止重复累计时间
+                                if (MarkingProlong[item] > 0 && !MarkingRecords.Contains(item))
+                                {
+                                    ProLongTime += MarkingProlong[item];
+                                    MarkingRecords.Add(item);
+                                    break;
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (flag)
+            {
+                return true;
+            }
+
+            return false;
+
+
+        }
         #endregion
     }
 }

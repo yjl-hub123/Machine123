@@ -36,7 +36,7 @@ namespace Machine
         private BatType type;           // 电池类型
         private BatNGType ngType;       // 电池NG类型
         private string code;            // 电池二维码
-
+        private string ismarking;         // Marking种类
         #endregion
 
 
@@ -90,6 +90,24 @@ namespace Machine
             }
         }
 
+        /// <summary>
+        /// Marking状态值
+        /// </summary>
+        public string MarkingType
+        {
+            get
+            {
+                return this.ismarking;
+            }
+
+            set
+            {
+                this.ismarking = value;
+            }
+        }
+
+
+
         #endregion
 
 
@@ -118,6 +136,7 @@ namespace Machine
                 Type = bat.Type;
                 NGType = bat.NGType;
                 Code = bat.Code;
+                ismarking = bat.MarkingType;
                 return true;
             }
             return false;
@@ -131,6 +150,7 @@ namespace Machine
             Type = BatType.Invalid;
             NGType = BatNGType.Invalid;
             Code = "";
+            ismarking = "";
         }
 
         /// <summary>

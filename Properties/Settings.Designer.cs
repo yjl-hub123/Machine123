@@ -12,7 +12,7 @@ namespace Machine.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.8.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.8.1.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -121,6 +121,18 @@ namespace Machine.Properties {
             get {
                 return ((string)(this["Machine_MiMESIntegrationForParameterValueIssueServiceService_MiMESIntegrationForP" +
                     "arameterValueIssueServiceService"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://gacmes1p022.catlgac.cn:50200/atlmeswebservice/MiFindCustomAndSfcDataServic" +
+            "eService")]
+        public string Machine_MiFindCustomAndSfcDataServiceService_MiFindCustomAndSfcDataServiceService {
+            get {
+                return ((string)(this["Machine_MiFindCustomAndSfcDataServiceService_MiFindCustomAndSfcDataServiceService" +
+                    ""]));
             }
         }
     }

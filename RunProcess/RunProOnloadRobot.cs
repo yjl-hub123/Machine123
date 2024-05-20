@@ -83,6 +83,13 @@ namespace Machine
             Auto_NgPalletPickUp,
             Auto_NgPalletCheckFinger,
 
+            // 取：托盘假电池
+            Auto_OnPalletPosPickMove,
+            Auto_OnPalletPosPickDown,
+            Auto_OnPalletPosFingerAction,
+            Auto_OnPalletPosPickUp,
+            Auto_OnPalletPosCheckFinger,
+
             // 暂存位取放流程
             Auto_BufferPosSetEvent,
             Auto_BufferPosMove,
@@ -254,6 +261,9 @@ namespace Machine
         private DateTime dtWaitStartTime;                   // 等待开始时间
         private object nAutoStepCT;                         // CT步骤
         private DateTime dtAutoStepTime;                    // CT时间
+
+        public int nContinuousPatAbnoAlarm;                 // 连续托盘异常点位当前次数
+
         #endregion
 
 
@@ -617,6 +627,12 @@ namespace Machine
                                         SetEvent(this, ModuleEvent.OnloadPlaceNGPallet, EventState.Require);
                                     }
                                 }
+
+                                if (nContinuousPatAbnoAlarm >= MachineCtrl.GetInstance().MaxPatAbnoAlarmCount && MachineCtrl.GetInstance().CancelFakeMode)
+                                {
+                                    string strmsg = string.Format("已连续有{0}盘异常Marking托盘大于设定值{1}盘！！有必要请关闭取消假电池模式或联系管理员处理！！", nContinuousPatAbnoAlarm, MachineCtrl.GetInstance().MaxPatAbnoAlarmCount);
+                                    ShowMsgBox.ShowDialog(strmsg, MessageType.MsgWarning, 1, DialogResult.OK);
+                                }
                             }
 
                             // 取：回炉托盘
@@ -646,7 +662,23 @@ namespace Machine
                                 if (Pallet[nPltIdx].IsStage(PltStage.Invalid))
                                 {
                                     Pallet[nPltIdx].Stage |= PltStage.Onload;
-                                    SaveRunData(SaveType.Pallet, nPltIdx);
+
+                                    bool patMark = Pallet[nPltIdx].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType);
+                                    if (MachineCtrl.GetInstance().CancelFakeMode)
+                                    {
+                                        if (patMark)  // 没有异常Marking直接变0
+                                            nContinuousPatAbnoAlarm = 0;
+                                        else    //有异常Marking加1
+                                            nContinuousPatAbnoAlarm++;
+                                    }
+                                    else  // 功能取消直接变0
+                                        nContinuousPatAbnoAlarm = 0;
+                                    SaveRunData(SaveType.Pallet | SaveType.Variables, nPltIdx);
+                                    if (nContinuousPatAbnoAlarm >= MachineCtrl.GetInstance().MaxPatAbnoAlarmCount)
+                                    {
+                                        string strmsg = string.Format("已连续有{0}盘异常Marking托盘大于设定值{1}盘！！", nContinuousPatAbnoAlarm, MachineCtrl.GetInstance().MaxPatAbnoAlarmCount);
+                                        ShowMessageBox(GetRunID() * 100 + 51, strmsg, "有必要请关闭取消假电池模式或联系管理员处理！！", MessageType.MsgAlarm);
+                                    }
                                 }
 
                                 if (PltHasTypeBat(Pallet[nPltIdx], BatType.Fake))
@@ -782,6 +814,16 @@ namespace Machine
                                 SaveRunData(SaveType.AutoStep | SaveType.Variables);
                                 break;
                             }
+                        }
+                        // 有满托盘并且是假电池托盘   计算取满料假电池托盘位
+                        else if (HasOnPalletFakeFull(ref PickAction))
+                        {
+
+                            this.AutoStepSafe = false;
+                            this.nextAutoStep = AutoSteps.Auto_OnPalletPosPickMove;
+                            SaveRunData(SaveType.AutoStep | SaveType.Variables);
+                            break;
+
                         }
                         // 放电池托盘  
                         else if (HasOnloadPlt(ref nCurPalletIdx) || HasOnloadBufPlt(ref nCurPalletIdx))
@@ -1759,6 +1801,102 @@ namespace Machine
 
                 #endregion
 
+                #region // 取：托盘假电池
+                case AutoSteps.Auto_OnPalletPosPickMove:
+                    {
+                        this.msgChs = string.Format("机器人移动到托盘取假电池位[{0}-{1}行-{2}列]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        this.msgEng = string.Format("Robot move to pallet pick fake Pos[{0}-{1}row-{2}col]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        CurMsgStr(this.msgChs, this.msgEng);
+
+
+
+                        if (FingerCheck(ModuleDef.Finger_All, false))
+                        {
+                            if (RobotMove(PickAction.station, PickAction.row, PickAction.col, nRobotSpeed, RobotAction.MOVE, PickAction.motorPos))
+                            {
+                                this.nextAutoStep = AutoSteps.Auto_OnPalletPosPickDown;
+                            }
+                        }
+                        break;
+                    }
+                case AutoSteps.Auto_OnPalletPosPickDown:
+                    {
+                        this.msgChs = string.Format("机器人取到托盘取假电池位下降[{0}-{1}行-{2}列]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        this.msgEng = string.Format("Robot pick move pallet pick fake pos robot down[{0}-{1}row-{2}col]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        CurMsgStr(this.msgChs, this.msgEng);
+
+
+
+                        if (FingerCheck(ModuleDef.Finger_All, false) && FingerClose(ModuleDef.Finger_All, false))
+                        {
+                            if (RobotMove(PickAction.station, PickAction.row, PickAction.col, nRobotSpeed, RobotAction.DOWN))
+                            {
+                                this.nextAutoStep = AutoSteps.Auto_OnPalletPosFingerAction;
+                            }
+                        }
+                        break;
+                    }
+                case AutoSteps.Auto_OnPalletPosFingerAction:
+                    {
+                        this.msgChs = string.Format("托盘取假电池位抓手关闭[{0}-{1}行-{2}列]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        this.msgEng = string.Format("Pallet pick fake pos finger close[{0}-{1}row-{2}col]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        CurMsgStr(this.msgChs, this.msgEng);
+
+
+                        if (FingerClose(PickAction.finger, PickAction.fingerClose))
+                        {
+                            int nPltIdx = PickAction.station - OnloadRobotStation.Pallet_0;
+                            int nIndex = (int)PickAction.finger;
+
+                            for (int nFingerIdx = 0; nFingerIdx < (int)ModuleDef.Finger_Count; nFingerIdx++)
+                            {
+                                if (1 == (nIndex & 0x01))
+                                {
+                                    Pallet[nPltIdx].Bat[PickAction.row, PickAction.col + (int)nFingerIdx].Type = BatType.NG;
+                                    Battery[nFingerIdx, 0].CopyFrom(Pallet[nPltIdx].Bat[PickAction.row, PickAction.col + (int)nFingerIdx]);
+                                    Pallet[nPltIdx].Bat[PickAction.row, PickAction.col + (int)nFingerIdx].Type = BatType.Fake;
+                                    Pallet[nPltIdx].Bat[PickAction.row, PickAction.col + (int)nFingerIdx].Code = "取消假电池已取出";
+                                    Pallet[nPltIdx].IsCancelFake = true;
+
+                                }
+                                nIndex = nIndex >> 1;
+                            }
+
+                            this.nextAutoStep = AutoSteps.Auto_OnPalletPosPickUp;
+                            SaveRunData(SaveType.AutoStep | SaveType.Battery | SaveType.Pallet, nPltIdx);
+                        }
+                        break;
+                    }
+                case AutoSteps.Auto_OnPalletPosPickUp:
+                    {
+                        this.msgChs = string.Format("机器人取托盘取假电池位上升[{0}-{1}行-{2}列]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        this.msgEng = string.Format("Pallet pick pos robot up[{0}-{1}row-{2}col]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        CurMsgStr(this.msgChs, this.msgEng);
+
+                        if (((int)OnloadRobotStation.Home == robotAutoInfo.station) ||
+                            RobotMove(PickAction.station, PickAction.row, PickAction.col, nRobotSpeed, RobotAction.UP))
+                        {
+                            this.nextAutoStep = AutoSteps.Auto_OnPalletPosCheckFinger;
+                            SaveRunData(SaveType.AutoStep);
+                        }
+                        break;
+                    }
+                case AutoSteps.Auto_OnPalletPosCheckFinger:
+                    {
+                        this.msgChs = string.Format("托盘位取假电池后检查抓手[{0}-{1}行-{2}列]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        this.msgEng = string.Format("Pallet pos check finger[{0}-{1}row-{2}col]", GetStationName(PickAction.station), PickAction.row + 1, PickAction.col + 1);
+                        CurMsgStr(this.msgChs, this.msgEng);
+
+                        if (FingerCheck(PickAction.finger, PickAction.fingerClose))
+                        {
+                            this.nextAutoStep = AutoSteps.Auto_CalcPlacePos;
+                            SaveRunData(SaveType.AutoStep | SaveType.Variables);
+                        }
+                        break;
+                    }
+                #endregion
+
+
 
                 #region // 计算放位置
 
@@ -2426,6 +2564,7 @@ namespace Machine
                             int pltIndex = PlaceAction.station - OnloadRobotStation.Pallet_0;
                             Pallet[pltIndex].Bat[PlaceAction.row, PlaceAction.col].CopyFrom(Battery[0, 0]);
                             Pallet[pltIndex].Type = PltType.WaitRebakingToOven;
+                            Pallet[pltIndex].IsCancelFake = false;
                             Battery[0, 0].Release();
                             nCurRebakePlt = -1;
 
@@ -3037,6 +3176,42 @@ namespace Machine
             }
             nCurPlt = -1;
             return false;
+        }
+
+        /// <summary>
+        ///  有满托盘并且是假电池托盘， 计算取满料假电池托盘位
+        /// </summary>
+        /// <returns></returns>
+        private bool HasOnPalletFakeFull(ref ActionInfo info)
+        {
+
+            if (!MachineCtrl.GetInstance().CancelFakeMode)
+            {
+                return false;
+            }
+
+            int nFakeRow = -1;
+            int nFakeCol = -1;
+
+            for (int nPltIdx = 0; nPltIdx < Pallet.Length; nPltIdx++)
+            {
+                // 满托盘 && 是假电池托盘 && 没有填充电池
+                if (PltIsFull(Pallet[nPltIdx]) && PltHasTypeBat(Pallet[nPltIdx], BatType.Fake) && !PltHasTypeBat(Pallet[nPltIdx], BatType.BKFill))
+                {
+                    // 2.搜索假电池位置
+                    if (Pallet[nPltIdx].IsType(PltType.OK) && PltHasTypeBat(Pallet[nPltIdx], BatType.Fake, ref nFakeRow, ref nFakeCol) && !Pallet[nPltIdx].IsCancelFake &&
+                        Pallet[nPltIdx].HasTypeBatMarking(MachineCtrl.GetInstance().MarkingType))
+                    {
+                        ModuleDef finger = ModuleDef.Finger_0;
+                        nFakeCol = (nFakeCol / 4) * 4;
+                        info.SetAction(OnloadRobotStation.Pallet_0 + nPltIdx, nFakeRow, nFakeCol, finger, true, MotorPosition.Onload_PalletPos);
+                        return true;
+
+                    }
+                }
+            }
+            return false;
+
         }
 
         // ================================ 取料计算 ================================

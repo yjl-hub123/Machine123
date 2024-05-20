@@ -366,7 +366,7 @@ namespace Machine
                     {
                         CurMsgStr("MES检查电芯状态", "Check SFC Status");
 
-                        string strMsg = "", strErr = "";
+                        string strMsg = "", strErr = "", strMarking = "";
                         for (int i = 0; i < 2; i++)
                         {
                             if (Battery[0, i].Type == BatType.OK &&
@@ -376,6 +376,11 @@ namespace Machine
                                 //strMsg = string.Format("Mes检查电芯状态失败，电芯条码：{0}，失败原因：{1}", Battery[Battery.GetLength(0) - 1, i].Code, strErr);
                                 //ShowMsgBox.ShowDialog(strMsg, MessageType.MsgWarning);
                             }
+
+                            if (!MesmiFindCustomAndSfcData(Battery[Battery.GetLength(0) - 1, i].Code, ref strMarking))
+                                Battery[Battery.GetLength(0) - 1, i].MarkingType = "";
+                            else
+                                Battery[Battery.GetLength(0) - 1, i].MarkingType = strMarking;
                         }
 
                         this.nextAutoStep = AutoSteps.Auto_SendPickSignal;
@@ -712,6 +717,55 @@ namespace Machine
 
             return (bCheckSfc && nCode == 0);
         }
+
+
+        /// <summary>校验电芯Marking
+        /// 
+        /// </summary>
+        private bool MesmiFindCustomAndSfcData(string strSfcCode, ref string MarkingValue)
+        {
+
+            if (!MachineCtrl.GetInstance().UpdataMES)
+            {
+                return true;
+            }
+            bool bCheckSfc = false;
+            int nCode = 0;
+            string strLog = "";
+            string strErr = "";
+            string[] mesParam = new string[16];
+            string strCallMESTime_Start = DateTime.Now.ToString("T");
+            DateTime dtStartTime = DateTime.Now;
+
+            bCheckSfc = MachineCtrl.GetInstance().MesmiFindCustomAndSfcData(strSfcCode, ref nCode, ref strErr, ref mesParam, ref MarkingValue);
+
+            TimeSpan timeSpan;
+            timeSpan = DateTime.Now - dtStartTime;
+            string strCallMESTime_End = DateTime.Now.ToString("T");
+
+            strLog = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14}"
+            , mesParam[0]
+            , mesParam[1]
+            , mesParam[2]
+            , mesParam[3]
+            , mesParam[4]
+            , mesParam[5]
+            , mesParam[6]
+            , mesParam[7]
+            , strSfcCode
+            , strCallMESTime_Start
+            , strCallMESTime_End
+            , timeSpan.TotalMilliseconds.ToString("f0")
+            , nCode
+            , MarkingValue
+            , ((string.IsNullOrEmpty(strErr)) ? "OK" : strErr));
+
+
+            MachineCtrl.GetInstance().MesReport(MESINDEX.MesmiFindCustomAndSfcData, strLog);
+
+            return (bCheckSfc && nCode == 0);
+        }
+
         #endregion
     }
 }

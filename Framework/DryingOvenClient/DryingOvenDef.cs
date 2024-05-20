@@ -265,6 +265,53 @@
         Have,                       // 有加热
     }
 
+    /// 是否有过程PIS值
+    /// </summary>
+    enum OvenProcessPISState
+    {
+        Invalid = 0,
+        Have,
+    }
+
+    /// <summary>
+    /// 炉腔异常点位
+    /// </summary>
+    enum ovenFurnaceChamberAbnormal
+    {
+        Invalid = 0,
+        Not,
+        Alarm,
+    }
+    /// <summary>
+    /// 提前工艺完成
+    /// </summary>
+    enum ovenAdvanceFinishCraft
+    {
+        Invalid = 0,
+        OK,
+
+    }
+    /// <summary>
+    /// 腔体运行状态
+    /// </summary>
+    enum ovenRunState
+    {
+        Invalid = 0,
+        Baking,
+        Break,
+        WaitRes,
+        WaterFinish
+    }
+
+    /// <summary>
+    /// 炉腔异常报警
+    /// </summary>
+    enum ovenAbnormalAlarm
+    {
+        OK = 0,
+        Alarm,
+    }
+
     /// <summary>
     /// 干燥炉命令索引
     /// </summary>
@@ -279,6 +326,7 @@
         ReadParam1,                  // 工艺参数1（读）
         FullOvenParam,              // 整炉参数（读）
         RunState2,                  // 工作状态2（读）
+        RunStateThree,                // 改造出炉状态（补读）
 
         WriteParam,                 // 工艺参数（写）
         WriteParam1,                 // 工艺参数（写）(写第二组数据)
@@ -293,6 +341,11 @@
         VacBreathOperate,           // 真空呼吸状态打开/关闭（写）
         PCSafeDoorState,            // 上位机安全门状态打开/关闭（写）
         BakingOverBat,              // 烘烤完成电芯数量（写）
+        palletCodeAndStartTime,     // 托盘条码及工艺开始时间（写）
+        bakingStart,                // 工艺开始（写）
+        cavityState,                // 腔体状态（写）
+        ovenIsMarking,                // Marking状态（写）
+        ovenAbnormalAlarm,          // 炉腔异常报警复位 多次未特殊出炉（写）
 
         End,
     }

@@ -22,6 +22,7 @@ namespace Machine
         MesFristProduct,         // 首件产品数据上传
         MesIntegrationForParameterValueIssue, //获取设备参数
         MesReleaseTray,          // 托盘解绑电芯
+        MesmiFindCustomAndSfcData, //sfc数据收集与过站（查看异常Marking类型）
         MESPAGE_END,
 
         MesRealTimeTemp = 20,         // mes实时温度

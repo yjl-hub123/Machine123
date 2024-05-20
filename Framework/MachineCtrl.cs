@@ -151,6 +151,13 @@ namespace Machine
         public bool bOvenRestEnable;                // 炉层屏蔽原因使能
         private int nHintTime;                      // 真空泵提示时间
 
+        //OWT
+        private string markingType;                       // Marking种类
+        public int nMaxWaitUpLoadCount;               //最大自动上传水含量数量
+        private bool nCancelFakeMode;                // 取消假电池模式
+        private int nMaxPatAbnoAlarmCount;           // 最大托盘异常Marking报警数量
+        private int nMaxProBakingTime;               // 最大延迟Baking时间
+
         public object lockDataBase;                // 写数据库锁
         #endregion
 
@@ -267,6 +274,86 @@ namespace Machine
                 this.wcserverIP = value;
             }
         }
+        /// <summary>
+        ///  本地mark配置
+        /// </summary>
+        public string MarkingType
+        {
+            get
+            {
+                return this.markingType;
+            }
+
+            private set
+            {
+                this.markingType = value;
+            }
+        }
+
+        /// <summary>
+        /// 不测水含量最大上传腔体数量
+        /// </summary>
+        public int MaxWaitUpLoadCount
+        {
+            get
+            {
+                return nMaxWaitUpLoadCount;
+            }
+
+            private set
+            {
+                this.nMaxWaitUpLoadCount = value;
+            }
+        }
+
+        /// <summary>
+        /// 取消假电池模式
+        /// </summary>
+        public bool CancelFakeMode
+        {
+            get
+            {
+                return nCancelFakeMode;
+            }
+            set
+            {
+                this.nCancelFakeMode = value;
+            }
+        }
+
+
+        /// <summary>
+        /// 最大托盘异常Marking报警数量
+        /// </summary>
+        public int MaxPatAbnoAlarmCount
+        {
+            get
+            {
+                return nMaxPatAbnoAlarmCount;
+            }
+            set
+            {
+                this.nMaxPatAbnoAlarmCount = value;
+            }
+        }
+
+
+        /// <summary>
+        /// 最大延长baking设定时间
+        /// </summary>
+        public int MaxProBakingTime
+        {
+            get
+            {
+                return nMaxProBakingTime;
+            }
+            set
+            {
+                this.nMaxProBakingTime = value;
+            }
+        }
+
+
         #endregion
 
 
@@ -358,7 +445,17 @@ namespace Machine
             InsertPrivateParam("OvenDataAddr", "服务器备份地址", "填写\\catl-file备份地址", nOvenDataAddr, RecordType.RECORD_STRING, ParameterLevel.PL_STOP_ADMIN);
             InsertPrivateParam("OvenRestEnable", "炉层屏蔽原因使能", "TRUE启用，FALSE不启用", bOvenRestEnable, RecordType.RECORD_BOOL);
             InsertPrivateParam("HintTime", "真空泵滤网维修提示日期1~28日", "默认设定日期 早晚八点提示", nHintTime, RecordType.RECORD_INT, ParameterLevel.PL_STOP_MAIN);
-            
+
+            //OWT
+            this.MarkingType = "NoMAKING-1";
+            InsertPrivateParam("MarkingType", "Marking种类分配加延长的baking时间", "填写Marking种类和延长的baking时间，一组Marking用-(减号)分割后面加时间 ;号隔开(英文;)" +
+                "（比如 Marking101-30;Marking102-40;Marking103）Marking101是Marking种类,30是延长的baking时间。Marking102是Marking种类,40是延长的baking时间。Marking103是种类，不延长baking时间后面不需要写-xx", markingType, RecordType.RECORD_STRING, ParameterLevel.PL_STOP_ADMIN);
+            InsertPrivateParam("MaxWaitUpLoadCount", "不测水含量最大上传腔体数量", "最大自动上传水含量腔体数量，大于最大腔体数量，不上传水含量", nMaxWaitUpLoadCount, RecordType.RECORD_INT);
+            InsertPrivateParam("CancelFakeMode", "取消假电池模式", "取消假电池模式，开启为取消放假电池(整盘没有Mark异常时会在最后把假电池排出NG)，不开启为放假电池", nCancelFakeMode, RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_ADMIN);
+            InsertPrivateParam("MaxPatAbnoAlarmCount", "最大托盘异常Marking报警数量", "最大托盘异常Marking报警数量，比如设置数量为3：连续3个托盘都有异常Mark提示报警", nMaxPatAbnoAlarmCount, RecordType.RECORD_INT);
+            InsertPrivateParam("MaxProBakingTime", "最大延长baking设定时间", "最大延长baking设定时间，累加时间>最大延长baking设定时间，下发的工艺时长=原始正常工艺时间+最大延长baking设定时间。累加时间 <= 最大延长baking设定时间，下发的工艺时长=原始正常工艺时间+累加时间", nMaxProBakingTime, RecordType.RECORD_INT);
+
+
             InitProduceCount();
             lineInfoUpdate = Task.Factory.StartNew(LineInfoUpdate, TaskCreationOptions.LongRunning);
             m_WCClient = new WaterContentClient();
@@ -968,6 +1065,14 @@ namespace Machine
             this.nOvenDataAddr = IniFile.ReadString("Parameter", "OvenDataAddr", this.nOvenDataAddr, Def.GetAbsPathName(Def.MachineCfg));
             this.bOvenRestEnable = IniFile.ReadBool("Parameter", "OvenRestEnable", false, Def.GetAbsPathName(Def.MachineCfg));
             this.nHintTime = IniFile.ReadInt("Parameter", "HintTime", this.nHintTime, Def.GetAbsPathName(Def.MachineCfg));
+
+            //owt
+            this.MarkingType = IniFile.ReadString("Parameter", "MarkingType", this.MarkingType, Def.GetAbsPathName(Def.MachineCfg));
+            this.MaxWaitUpLoadCount = IniFile.ReadInt("Parameter", "MaxWaitUpLoadCount", this.MaxWaitUpLoadCount, Def.GetAbsPathName(Def.MachineCfg));
+            this.CancelFakeMode = IniFile.ReadBool("Parameter", "CancelFakeMode", this.CancelFakeMode, Def.GetAbsPathName(Def.MachineCfg));
+            this.MaxPatAbnoAlarmCount = IniFile.ReadInt("Parameter", "MaxPatAbnoAlarmCount", this.MaxPatAbnoAlarmCount, Def.GetAbsPathName(Def.MachineCfg));
+            this.MaxProBakingTime = IniFile.ReadInt("Parameter", "MaxProBakingTime", this.MaxProBakingTime, Def.GetAbsPathName(Def.MachineCfg));
+
             return true;
         }
 
@@ -2704,6 +2809,9 @@ namespace Machine
                 case (int)MESINDEX.MesReleaseTray:
                     strSection = string.Format("MesReleaseTray");
                     break;
+                case (int)MESINDEX.MesmiFindCustomAndSfcData:
+                    strSection = string.Format("MesmiFindCustomAndSfcData");
+                    break;
                 default:
                     break;
             }
@@ -2789,6 +2897,9 @@ namespace Machine
                 case (int)MESINDEX.MesReleaseTray:
                     strSection = string.Format("MesReleaseTray");
                     break;
+                case (int)MESINDEX.MesmiFindCustomAndSfcData:
+                    strSection = string.Format("MesmiFindCustomAndSfcData");
+                    break;
                 default:
                     break;
             }
@@ -2869,7 +2980,7 @@ namespace Machine
                     {
                         strFilePath = "D:\\MESLog\\4)水含量(托盘)数据采集(MesJigdataCollect)";
                         strFilePathEx = "D:\\MESLogEx\\4)水含量(托盘)数据采集(MesJigdataCollect)";
-                        strColHead = "Site,User,Operation,OperationRevision,Resource,ModeProcessSfc,DCGroup,DCGroupRevision,ActivityId,ncGroup,Mode,BKOVENNO,混合型,BKANDHMDTY,BKCADHMDTY,BKVBVPMIN,BKVBVPMAX,BKTIME,BKSTARTTIME,BKOVERTIME,BKVBTIME,BKVACM,PROCESSLOT,YRSJ,BKMINTMPVACM ,BKMAXTMPVACM,干燥炉资源号,干燥炉编号(ID),炉层(A-B-C-D-E),开始调用时间,数据上传成功时间,夹具条码,电芯条码,耗时(ms),返回代码(Code),Message,阴极,阳极,电芯位置信息,呼吸次数";
+                        strColHead = "Site,User,Operation,OperationRevision,Resource,ModeProcessSfc,DCGroup,DCGroupRevision,ActivityId,ncGroup,Mode,BKOVENNO,混合型,BKANDHMDTY,BKCADHMDTY,BKVBVPMIN,BKVBVPMAX,BKTIME,BKSTARTTIME,BKOVERTIME,BKVBTIME,BKVACM,PROCESSLOT,YRSJ,BKMINTMPVACM ,BKMAXTMPVACM,BKGCPIS,PIS,BKPISGG,BKZXPIS,BXPISSHLGG,干燥炉资源号,干燥炉编号(ID),炉层(A-B-C-D-E),开始调用时间,数据上传成功时间,夹具条码,电芯条码,耗时(ms),返回代码(Code),Message,阴极,阳极,电芯位置信息,呼吸次数";
                         break;  
                     }
                 case MESINDEX.MesChangeResource:
@@ -2948,6 +3059,13 @@ namespace Machine
                         strFilePathEx = "D:\\MESLogEx\\14)托盘解绑电芯(MesJigdataCollect)";
                         strColHead = "Site,User,Operation,OperationRevision,Resource,ModeProcessSfc,DCGroup,DCGroupRevision,ActivityId," +
                             "DcGroupSequence,Mode,资源号,干燥炉,干燥炉层,托盘号,开始调用接口时间,完成调用接口时间,调用接口总耗时(ms),返回代码(Code),Message";
+                        break;
+                    }
+                case MESINDEX.MesmiFindCustomAndSfcData:
+                    {
+                        strFilePath = "D:\\MESLog\\10)sfc数据收集与过站（查看异常Marking类型）(MesmiFindCustomAndSfcData)";
+                        strFilePathEx = "D:\\MESLogEx\\10)sfc数据收集与过站（查看异常Marking类型）(MesmiFindCustomAndSfcData)";
+                        strColHead = "Site,User,Operation,OperationRevision,Resource,activityld,modeProcessSfc,DCGroupRevision,电池条码,开始调用接口时间,完成调用接口时间,调用接口总耗时(ms),返回代码(Code),Marking值,返回信息";
                         break;
                     }
                 default:
@@ -3277,7 +3395,7 @@ namespace Machine
         }
 
         // 水含量（托盘）数据采集
-        public bool MesWaterCollect(int nDryOvenID, string strJigCode, string[] strValue, string[] strValue2, string[] strTimeValuestring, string srBkOvenNo, ref int nCode, ref string strMsg, ref string[] mesParam)
+        public bool MesWaterCollect(int nDryOvenID, string strJigCode, string[] strValue, string[] strValue2, string[] strTimeValuestring, string srBkOvenNo, ref int nCode, ref string strMsg, ref string[] mesParam,bool[] bValues)
         {
             if (!UpdataMES)
             {
@@ -3298,9 +3416,9 @@ namespace Machine
             MachineIntegrationService.dataCollectForProcessLotExResponse dataCollectResourceResponse = new MachineIntegrationService.dataCollectForProcessLotExResponse();
             MachineIntegrationService.processLotDcResponseEx ResourceDcResponse = new MachineIntegrationService.processLotDcResponseEx();
 
-            MachineIntegrationService.machineIntegrationParametricData[] hotPressParameData = new MachineIntegrationService.machineIntegrationParametricData[19];
-            hotPressRequest.parametricDataArray = new MachineIntegrationService.machineIntegrationParametricData[19];
-            for (int i = 0; i < 19; i++)
+            MachineIntegrationService.machineIntegrationParametricData[] hotPressParameData = new MachineIntegrationService.machineIntegrationParametricData[25];
+            hotPressRequest.parametricDataArray = new MachineIntegrationService.machineIntegrationParametricData[25];
+            for (int i = 0; i < 25; i++)
             {
                 hotPressParameData[i] = new MachineIntegrationService.machineIntegrationParametricData();
             }
@@ -3435,6 +3553,41 @@ namespace Machine
             hotPressParameData[18].value = strValue2[9];
             hotPressRequest.parametricDataArray[18] = hotPressParameData[18];
 
+            // --------------------------------
+
+            //是否有PIS值  
+            hotPressParameData[19].name = "BKGCPIS"; // "IsHasPISValue"; 
+            hotPressParameData[19].dataType = MachineIntegrationService.ParameterDataType.NUMBER; // MachineIntegrationService.ParameterDataType.BOOLEAN;
+            hotPressParameData[19].value = bValues[0] ? "1" : "0"; //有给1 没有0 bValues[0].ToString();
+            hotPressRequest.parametricDataArray[19] = hotPressParameData[19];
+
+            /// 是否测试水含量
+            hotPressParameData[20].name = "BKSHLCS"; // "IsUploadWater";
+            hotPressParameData[20].dataType = MachineIntegrationService.ParameterDataType.NUMBER;
+            hotPressParameData[20].value = bValues[1] ? "0" : "1";  // bValues[1].ToString();   //是否测试水含量 测试1 不测试0  
+            hotPressRequest.parametricDataArray[20] = hotPressParameData[20];
+
+            hotPressParameData[21].name = "PIS"; //  "PISValue";
+            hotPressParameData[21].dataType = MachineIntegrationService.ParameterDataType.NUMBER;
+            hotPressParameData[21].value = strValue2[10];
+            hotPressRequest.parametricDataArray[21] = hotPressParameData[21];
+
+            hotPressParameData[22].name = "BKPISGG"; //  "PISValue";
+            hotPressParameData[22].dataType = MachineIntegrationService.ParameterDataType.NUMBER;
+            hotPressParameData[22].value = strValue2[11];
+            hotPressRequest.parametricDataArray[22] = hotPressParameData[22];
+            
+            hotPressParameData[23].name = "BKZXPIS";
+            hotPressParameData[23].dataType = MachineIntegrationService.ParameterDataType.NUMBER;
+            hotPressParameData[23].value = strValue2[12];
+            hotPressRequest.parametricDataArray[23] = hotPressParameData[23];
+            
+            hotPressParameData[24].name = "BKPISSHLGG";
+            hotPressParameData[24].dataType = MachineIntegrationService.ParameterDataType.NUMBER;
+            hotPressParameData[24].value = strValue2[13];
+            hotPressRequest.parametricDataArray[24] = hotPressParameData[24];
+
+            // ------------------------
 
             hotPressRequest.site = m_MesParameter[mesIndex].sSite;
             hotPressRequest.operation = m_MesParameter[mesIndex].sOper;
@@ -3475,6 +3628,14 @@ namespace Machine
             mesParam[26] = strValue2[2];//最小温度
             mesParam[27] = strValue2[3];//最大温度
             mesParam[28] = strValue2[9];//呼吸次数
+
+            mesParam[29] = bValues[1] ? "0" : "1";  // bValues[1].ToString(); //是否测试水含量 测试1 不测试0 //strValue2[8];//bkai   
+            mesParam[30] = strValue2[10];//bkai   PIS值 //PIS值 
+            mesParam[31] = strValue2[11];  //BKPISGG // strValue2[10];//bkai   //过程规格值
+            mesParam[32] = strValue2[12]; // BKZXPIS  strValue2[11];//bkai   //最小pis值
+            mesParam[33] = strValue2[13];  //BXPISSHLGG   //水含量规格值 
+            mesParam[34] = bValues[0] ? "1" : "0";    //是否有PIS值
+
 
             dataCollectResouse.ProcessLotDcRequestEx = hotPressRequest;
             try
@@ -4552,6 +4713,104 @@ namespace Machine
             }
             return bResult;
         }
+
+        /// <summary> 校验Marking值
+        /// 
+        /// </summary>
+        /// <param name="strTrayCode"></param>
+        /// <param name="nCode"></param>
+        /// <param name="strMsg"></param>
+        /// <param name="mesParam"></param>
+        /// <returns></returns>
+        public bool MesmiFindCustomAndSfcData(string strTrayCode, ref int nCode, ref string strMsg, ref string[] mesParam, ref string MarkingArraay)
+        {
+            if (!UpdataMES)
+            {
+                return true;
+            }
+            int mesIndex = (int)MESINDEX.MesmiFindCustomAndSfcData;
+            ReadMesParameter(mesIndex);
+            strMsg = "";
+            bool bResult = false;
+
+            MiFindCustomAndSfcDataServiceService.miFindCustomAndSfcData miFindCustomAndSfcData = new MiFindCustomAndSfcDataServiceService.miFindCustomAndSfcData();
+
+            mesParam[0] = m_MesParameter[mesIndex].sSite;
+            mesParam[1] = m_MesParameter[mesIndex].MesUser;
+            mesParam[2] = m_MesParameter[mesIndex].sOper;
+            mesParam[3] = m_MesParameter[mesIndex].sOperRevi;
+            mesParam[4] = m_MesParameter[mesIndex].sReso;
+            mesParam[5] = m_MesParameter[mesIndex].sActi;
+            mesParam[6] = Convert.ToString(m_MesParameter[mesIndex].eModeProcessSfc);
+            mesParam[7] = m_MesParameter[mesIndex].sDcGroupRevi;
+
+            //MesCheckProcessLot
+            MiFindCustomAndSfcDataServiceService.MiFindCustomAndSfcDataServiceService miFindCustomAndSfcDataServiceService = new MiFindCustomAndSfcDataServiceService.MiFindCustomAndSfcDataServiceService();
+
+            miFindCustomAndSfcDataServiceService.Credentials = new NetworkCredential(m_MesParameter[mesIndex].MesUser, m_MesParameter[mesIndex].MesPsd);
+            miFindCustomAndSfcDataServiceService.Url = m_MesParameter[mesIndex].MesURL;
+            miFindCustomAndSfcDataServiceService.Timeout = m_MesParameter[mesIndex].MesTimeOut;
+            miFindCustomAndSfcDataServiceService.PreAuthenticate = true;
+
+            MiFindCustomAndSfcDataServiceService.miFindCustomAndSfcDataResponse findCustomAndSfcDataResponse = new MiFindCustomAndSfcDataServiceService.miFindCustomAndSfcDataResponse();
+            MiFindCustomAndSfcDataServiceService.findCustomAndSfcDataRequest customAndSfcDataRequest = new MiFindCustomAndSfcDataServiceService.findCustomAndSfcDataRequest();
+            MiFindCustomAndSfcDataServiceService.findCustomAndSfcDataResponse andSfcDataResponse = new MiFindCustomAndSfcDataServiceService.findCustomAndSfcDataResponse();
+
+
+
+            customAndSfcDataRequest.site = m_MesParameter[mesIndex].sSite;
+            customAndSfcDataRequest.operation = m_MesParameter[mesIndex].sOper;
+            customAndSfcDataRequest.operationRevision = m_MesParameter[mesIndex].sOperRevi;
+            customAndSfcDataRequest.resource = m_MesParameter[mesIndex].sReso;
+            customAndSfcDataRequest.user = m_MesParameter[mesIndex].sUser;
+            customAndSfcDataRequest.activity = m_MesParameter[mesIndex].sActi;
+            customAndSfcDataRequest.sfc = strTrayCode;
+            customAndSfcDataRequest.modeProcessSFC = ((MiFindCustomAndSfcDataServiceService.modeProcessSFC)m_MesParameter[mesIndex].eModeProcessSfc);
+            customAndSfcDataRequest.showMarking = true;
+            customAndSfcDataRequest.showMarkingSpecified = true;
+
+            miFindCustomAndSfcData.FindCustomAndSfcDataRequest = customAndSfcDataRequest;
+            try
+            {
+                findCustomAndSfcDataResponse = miFindCustomAndSfcDataServiceService.miFindCustomAndSfcData(miFindCustomAndSfcData);
+
+            }
+            catch (System.Exception ex)
+            {
+                nCode = m_MesParameter[mesIndex].nCode = -1;
+                strMsg = m_MesParameter[mesIndex].sMessage = "Excute MesCheckProcessLot TimeOut" + ex.Message;
+                return false;
+            }
+
+            int nRetResult = Convert.ToInt32(findCustomAndSfcDataResponse.@return.code);
+            if (nRetResult == 0)
+            {
+                andSfcDataResponse = findCustomAndSfcDataResponse.@return;
+                if (andSfcDataResponse != null)
+                {
+                    nCode = m_MesParameter[mesIndex].nCode = nRetResult;
+                    strMsg = andSfcDataResponse.message;
+                    m_MesParameter[mesIndex].sMessage = strMsg;
+                    m_MesParameter[mesIndex].nCode = nCode;
+
+                    MarkingArraay = andSfcDataResponse.marking;
+
+
+                    if (0 == nCode)
+                    {
+                        bResult = true;
+                    }
+                }
+            }
+            else
+            {
+                nCode = m_MesParameter[mesIndex].nCode = nRetResult;//20201204修改
+                strMsg = m_MesParameter[mesIndex].sMessage = "excute MesCheckProcessLot TimeOut" + findCustomAndSfcDataResponse.@return.message;
+            }
+
+            return bResult;
+        }
+
         #endregion
     }
 }

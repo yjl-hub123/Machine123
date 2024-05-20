@@ -88,6 +88,26 @@ namespace Machine
         public OvenNitrogenWarmState NitrogenWarmState;              // 氮气加热状态
         public OvenNitrogenWarmShield NitrogenWarmShield;            // 氮气加热屏蔽
 
+
+        //OWT 参数
+        public string palletCodeAndStartTime;           // 20)托盘条码及工艺开始时间string
+        public string[] palletCodeAndStartTimes;        // 20)托盘条码及工艺开始时间数组
+        public float unMinProcessPISValues;              //最小 PIS 值
+        public float unProcessPISValues;                //过程PIS值
+        public OvenProcessPISState unIsHasProcessPIS;   //是否有过程PIS值
+        public float unProcessSpecification;            //过程规格值
+        public float unAdvanceBakSpecifiValues;         //提前出炉规格值
+        public float unWaterSpecificationValues;        //水含量规格值
+        public ovenFurnaceChamberAbnormal unFurnaceChamberAbnormal;          //炉腔异常点位
+        public int unOvenIsMarking;                     // 是否有异常Marking
+        public ovenRunState unOvenRunState;             // 当前腔体运行状态
+        public float WaterValue;                             // 水含量值
+        public uint unBakingCount;                           // 当前烘烤次数
+        public ovenAdvanceFinishCraft unAdvanceFinishCraft;      //提前工艺完成
+        public ovenAbnormalAlarm unAbnormalAlarm;                  // 炉腔异常报警（调度不放炉子）
+
+
+
         // 【腔体数据锁】
         public object dataLock;
 
@@ -222,6 +242,24 @@ namespace Machine
                         unHistEnergySum = cavityData.unHistEnergySum;
                         unOneDayEnergy = cavityData.unOneDayEnergy;
                         unBatAverEnergy = cavityData.unBatAverEnergy;
+
+                        //OWT
+                        palletCodeAndStartTime = cavityData.palletCodeAndStartTime;
+                        palletCodeAndStartTimes = cavityData.palletCodeAndStartTimes;
+                        unOvenRunState = cavityData.unOvenRunState;
+                        unMinProcessPISValues = cavityData.unMinProcessPISValues;
+                        unProcessPISValues = cavityData.unProcessPISValues;
+                        unIsHasProcessPIS = cavityData.unIsHasProcessPIS;
+                        unProcessSpecification = cavityData.unProcessSpecification;
+                        unAdvanceBakSpecifiValues = cavityData.unAdvanceBakSpecifiValues;
+                        unWaterSpecificationValues = cavityData.unWaterSpecificationValues;
+                        unFurnaceChamberAbnormal = cavityData.unFurnaceChamberAbnormal;
+                        WaterValue = cavityData.WaterValue;
+                        unAbnormalAlarm = cavityData.unAbnormalAlarm;
+                        // 不读取工艺次数
+                        //  unBakingCount = cavityData.unBakingCount;
+                        unAdvanceFinishCraft = cavityData.unAdvanceFinishCraft;
+
                     }
                 }
                 return true;
@@ -329,8 +367,25 @@ namespace Machine
             // 【整炉参数】
             unHistEnergySum = 0;                   
             unOneDayEnergy = 0;                    
-            unBatAverEnergy = 0;                    
-    }
+            unBatAverEnergy = 0;
+
+            //OWT 
+            palletCodeAndStartTime = "0";
+            palletCodeAndStartTimes = new string[11] { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0000000000" };
+            unMinProcessPISValues = 0;
+            unProcessPISValues = 0;
+            unIsHasProcessPIS = OvenProcessPISState.Invalid;
+            unProcessSpecification = 0;
+            unAdvanceBakSpecifiValues = 0;
+            unWaterSpecificationValues = 0;
+            unFurnaceChamberAbnormal = ovenFurnaceChamberAbnormal.Invalid;
+            unOvenIsMarking = -1;
+            WaterValue = 0;
+            unBakingCount = 0;
+            unAdvanceFinishCraft = ovenAdvanceFinishCraft.Invalid;
+            unAbnormalAlarm = ovenAbnormalAlarm.OK;
+
+        }
     }
 
     #endregion
