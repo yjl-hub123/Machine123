@@ -3044,15 +3044,28 @@ namespace Machine
                     }
                     else
                     {
-                        // 干燥炉放上料完成OK满托盘 || 干燥炉放上料完成OK带假电池满托盘
-                        if (ModuleEvent.OvenPlaceFullPlt == eEvent || ModuleEvent.OvenPlaceFakeFullPlt == eEvent)
+                        // 干燥炉取待检测含假电池托盘（未取走假电池的托盘）
+                        if (ModuleEvent.OvenPickDetectPlt == eEvent)
                         {
-                            int[] nIdx = new int[10] { 5, 9, 4, 8, 3, 7, 2, 6, 1, 0 };
-                            for (int nOvenArrayIdx = 0; nOvenArrayIdx < nIdx.Length; nOvenArrayIdx++)
+                            if (CalcPriorityOffLoadPlace(ref nOvenID, ref nRow, false))
                             {
-                                if (SearchOvenPlacePos(modeIdx, eEvent, nIdx[nOvenArrayIdx], ref nRow, ref nCol))
+                                pDryOven = arrDryingOven[nOvenID];
+                                if (ModuleEvent.OvenPickDetectPlt == eEvent && pDryOven.bisBakingMode[nRow] && !pDryOven.bFlagbit[nRow])
+                                { continue; }
+
+                                if (SearchOvenPickPosEx(modeIdx, eEvent, nOvenID, nRow, ref nCol))
                                 {
-                                    nOvenID = arrDryingOven[nIdx[nOvenArrayIdx]].GetOvenID();
+                                    return true;
+                                }
+                            }
+
+                        }
+                        else if (ModuleEvent.OvenPickOffloadPlt == eEvent)// 干燥炉取待下料托盘（干燥完成托盘）
+                        {
+                            if (CalcPriorityOffLoadPlace(ref nOvenID, ref nRow))
+                            {
+                                if (SearchOvenPickPosEx(modeIdx, eEvent, nOvenID, nRow, ref nCol))
+                                {
                                     return true;
                                 }
                             }
