@@ -93,11 +93,11 @@ namespace Machine
         public string palletCodeAndStartTime;           // 20)托盘条码及工艺开始时间string
         public string[] palletCodeAndStartTimes;        // 20)托盘条码及工艺开始时间数组
         public float unMinProcessPISValues;              //最小 PIS 值
-        public float unProcessPISValues;                //过程PIS值
-        public OvenProcessPISState unIsHasProcessPIS;   //是否有过程PIS值
-        public float unProcessSpecification;            //过程规格值
-        public float unAdvanceBakSpecifiValues;         //提前出炉规格值
-        public float unWaterSpecificationValues;        //水含量规格值
+        public float unProcessPISValues;                // 过程PIS值
+        public OvenProcessPISState unIsHasProcessPIS;   // 是否有过程PIS值
+        public float unProcessSpecification;            // 过程规格值
+        public float unAdvanceBakSpecifiValues;         // 提前出炉规格值
+        public float unWaterSpecificationValues;        // 水含量规格值
         public ovenFurnaceChamberAbnormal unFurnaceChamberAbnormal;          //炉腔异常点位
         public int unOvenIsMarking;                     // 是否有异常Marking
         public ovenRunState unOvenRunState;             // 当前腔体运行状态

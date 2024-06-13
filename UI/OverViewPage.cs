@@ -1199,6 +1199,7 @@ namespace Machine
                             if (run != null)
                             {
                                 strInfo = string.Format("{0}", ((RunProDryingOven)run).GetnCurOvenRest(nRowIdx));
+                                //PropertyEx.state
                                 g.DrawString(strInfo, fontCir, Brushes.Red, (float)(rcPlt.X - 45), (float)(rcPlt.Top + fPltAvgH / 5));
                             }
                         }

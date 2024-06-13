@@ -404,8 +404,8 @@ namespace Machine
                 this.checkBoxUser.Image = Properties.Resources.UserLogout;
                 Motor motor0 = DeviceManager.Motors(0);
                 Motor motor1 = DeviceManager.Motors(1);
-                motor0.SetUser(4);
-                motor1.SetUser(4);
+                //motor0.SetUser(4);
+                //motor1.SetUser(4);
             }
         }
 

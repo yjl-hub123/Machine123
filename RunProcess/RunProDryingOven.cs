@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -76,6 +77,7 @@ namespace Machine
         // 【IO/电机】
 
         // 【模组参数】
+   
         private bool[] bOvenEnable;                     // 炉腔使能：TRUE启用，FALSE禁用
         private bool[] bPressure;                       // 炉腔保压：TRUE启用，FALSE禁用
         private bool[] bTransfer;                       // 炉腔转移：TRUE启用，FALSE禁用
@@ -258,7 +260,13 @@ namespace Machine
 
             for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
             {
-                InsertPrivateParam("OvenEnable" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔使能", "炉腔使能：TRUE启用，FALSE禁用", bOvenEnable[nRowIdx], RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_ADMIN);
+                
+                InsertPrivateParam("OvenEnable" + (nRowIdx + 1), (nRowIdx + 1) + "层炉腔使能", "炉腔使能：TRUE启用，FALSE禁用", bOvenEnable[nRowIdx], RecordType.RECORD_BOOL, (n, m, u) => 
+                {
+                    return true == CheckOvenRest(n)
+                            ? !(u == UserLevelType.USER_ADMIN)
+                            : m;
+                });
             }
 
             for (int nRowIdx = 0; nRowIdx < (int)ModuleDef.PalletMaxRow; nRowIdx++)
@@ -2902,7 +2910,6 @@ namespace Machine
                                         strAlarmInfo = string.Format("干燥炉{0}\r\n第{1}层保压{2}失败", nOvenID + 1, nCavityIdx + 1, bPressure[nCavityIdx] ? "打开" : "关闭");
                                         RecordMessageInfo(strAlarmInfo, MessageType.MsgAlarm);
                                         ShowMessageBox(GetRunID() * 100 + 3, strAlarmInfo, "请查看干燥炉状态是否正常", MessageType.MsgWarning, 10, DialogResult.OK);
-
                                     }
                                 }
                                 else if (OvenVacTimeAlarm.Alarm != bgCavityData[nCavityIdx].VacTimeAlarm)
@@ -2920,8 +2927,10 @@ namespace Machine
 
                                     // 切换腔体状态
                                     nBakingType[nCavityIdx] = (int)BakingType.Invalid;
+                                    bOvenEnable[nCavityIdx] = false;
                                     MesmiCloseNcAndProcess(nCavityIdx);
                                     SetCavityState(nCavityIdx, CavityState.Standby);
+                                    SetCurOvenRest("烘烤结束异常，真空小于100PA时间低于标准值!", nCavityIdx);
                                     SaveRunData(SaveType.Variables);
                                     RecordMessageInfo("真空小于100PA时间低于标准值！！！", MessageType.MsgAlarm);
                                     ShowMessageBox(GetRunID() * 100 + 5, "真空小于100PA时间低于标准值！！！", "请查看参数或检查单体炉", MessageType.MsgWarning, 10, DialogResult.OK);
@@ -4321,6 +4330,19 @@ namespace Machine
                 return string.Empty;
             }
             return nCurOvenRest[nIndex];
+        }
+
+        public bool CheckOvenRest(int nIndex)
+        {
+            if (nIndex < 0 || nIndex >= (int)ModuleDef.PalletMaxRow)
+            {
+                return true;
+            }
+            if (nCurOvenRest[nIndex].Contains("烘烤结束异常"))
+            {
+                return true;
+            }
+            return false;
         }
 
         /// <summary>

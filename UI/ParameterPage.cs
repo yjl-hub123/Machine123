@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using SystemControlLibrary;
 
@@ -30,7 +31,7 @@ namespace Machine
         int oldRowIndex;
 
         private Type objectPM;
-
+       
         #endregion
 
         /// <summary>
@@ -47,6 +48,7 @@ namespace Machine
             this.propertyGridParameter.PropertySort = PropertySort.Categorized;
             this.propertyGridParameter.Font = font;
             this.rtxtParamHelp.Font = font;
+          
         }
 
         /// <summary>
@@ -371,7 +373,7 @@ namespace Machine
                 bool oldState = true;
                 bool isChange = false;
 
-                foreach(Property item in pm)
+                foreach (Property item in pm)
                 {
                     oldState = item.ReadOnly;
 
@@ -410,7 +412,11 @@ namespace Machine
                         default:
                             break;
                     }
-
+                    if (item.CustomFunc != null)
+                    {
+                        int index = ExtractLastNumber(item.Name);
+                        item.ReadOnly = item.CustomFunc(index - 1, item.ReadOnly, (UserLevelType)userLevel);
+                    }
                     if (oldState != item.ReadOnly)
                     {
                         isChange = true;
@@ -426,7 +432,11 @@ namespace Machine
 
             #endregion
         }
-        
+        static int ExtractLastNumber(string input)
+        {
+            var match = Regex.Match(input, @"\d+$");
+            return  match.Success ? int.Parse(match.Value) : 0;
+        }
         /// <summary>
         /// 修改使能或运行模式
         /// </summary>

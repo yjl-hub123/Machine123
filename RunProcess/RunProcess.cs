@@ -40,7 +40,6 @@ namespace Machine
         private bool autoStepSafe;              // 自动运行安全标识
         private object autoCheckStep;           // 自动运行时的检查步骤
         private object lockDataBase;            // 数据库更新锁
-
         // 模组参数
         private bool onLoad;                    // 上料使能
         private bool offLoad;                   // 下料使能
@@ -51,7 +50,7 @@ namespace Machine
         private Battery[,] battery;             // 电池数组
         private Pallet[] pallet;                // 托盘数组
         private IniStream fileStream;           // Ini文件流
-
+       
         #endregion
 
 
@@ -250,7 +249,7 @@ namespace Machine
             this.dataBaseParameterList = new Dictionary<string, ParameterFormula>();
             this.fileStream = new IniStream();
             this.lockDataBase = new object();
-            
+          
             // 插入通用参数
             OnLoad = OffLoad = false;
             InsertPublicParam("OnLoad", "上料使能", "上料使能：True启用，False禁用", this.OnLoad, RecordType.RECORD_BOOL, ParameterLevel.PL_STOP_MAIN);
@@ -913,7 +912,13 @@ namespace Machine
             this.insertParameterList.Add(key, new ParameterFormula(Def.GetProductFormula(), this.RunModule, name, key, value.ToString(), paraType, paraLevel));
             this.ParameterProperty.Add("模组参数", key, name, description, value, (int)paraLevel, readOnly, visible);
         }
-        
+        protected void InsertPrivateParam(string key, string name, string description, object value, RecordType paraType, Func<int,bool, UserLevelType, bool> CustomPermissions, ParameterLevel paraLevel = ParameterLevel.PL_STOP_MAIN, bool readOnly = false, bool visible = true)
+        {
+            this.insertParameterList.Add(key, new ParameterFormula(Def.GetProductFormula(), this.RunModule, name, key, value.ToString(), paraType, paraLevel));
+            this.ParameterProperty.Add("模组参数", key, name, description, value, (int)paraLevel, readOnly, visible);
+            if (CustomPermissions != null)
+                this.ParameterProperty[this.ParameterProperty.Count - 1].CustomFunc = CustomPermissions;
+        }
         #endregion
 
 
