@@ -2343,7 +2343,7 @@ namespace Machine
             switch (name)
             {
                 case "PreHeatBreathEnable":
-                    if (DialogResult.OK == ShowMsgBox.ShowDialog(string.Format("是否要变更预热呼吸使能1为{0}", value.ToString()), MessageType.MsgQuestion))
+                    if (DialogResult.Yes == ShowMsgBox.ShowDialog(string.Format("是否要变更预热呼吸使能1为{0}", value.ToString()), MessageType.MsgQuestion))
                     {
                         return true;
                     }
@@ -2352,7 +2352,7 @@ namespace Machine
                         return false;
                     }
                 case "PreHeatBreathEnable2":
-                    if (DialogResult.OK == ShowMsgBox.ShowDialog(string.Format("是否要变更预热呼吸使能2为{0}", value.ToString()), MessageType.MsgQuestion))
+                    if (DialogResult.Yes == ShowMsgBox.ShowDialog(string.Format("是否要变更预热呼吸使能2为{0}", value.ToString()), MessageType.MsgQuestion))
                     {
                         return true;
                     }
@@ -2361,7 +2361,7 @@ namespace Machine
                         return false;
                     }
                 case "VacBreathEnable":
-                    if (DialogResult.OK == ShowMsgBox.ShowDialog(string.Format("是否要变更真空呼吸使能1为{0}", value.ToString()), MessageType.MsgQuestion))
+                    if (DialogResult.Yes == ShowMsgBox.ShowDialog(string.Format("是否要变更真空呼吸使能1为{0}", value.ToString()), MessageType.MsgQuestion))
                     {
                         return true;
                     }
