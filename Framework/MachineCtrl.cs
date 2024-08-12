@@ -1,4 +1,8 @@
 ﻿using HelperLibrary;
+using HslCommunication;
+using HslCommunication.Profinet.Omron;
+using Machine.Framework;
+using Machine.Framework.DbType;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,10 +14,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using SystemControlLibrary;
 using static SystemControlLibrary.DataBaseRecord;
-using HslCommunication.Profinet.Omron;
-using HslCommunication;
-using Machine.Framework;
-using Machine.Framework.DbType;
 
 namespace Machine
 {
@@ -66,11 +66,13 @@ namespace Machine
         public int[] OLightTowerBuzzer;             // 输出：灯塔-蜂鸣器
         private int[] OHeartBeat;                   // 输出：模拟心跳
         private int[] OLineInfoAlarm;               // 输出：拉线信息报警 声光报警器
+        private int OManualSafeSignal;            // 输出：人工操作台光栅报警传给PLC
 
         private int[] IOnloadRobotAlarm;             //输入：上料机器人碰撞报警
         private int[] ITransferRobotAlarm;           //输入：调度机器人碰撞报警
         private int[] IOffloadRobotAlarm;            //输入：下料机器人碰撞报警
         private int[] IRobotCrash;                   //输入：机器人碰撞
+        private int IManualSafeSignal;             //输入：人工操作台光栅安全信号
 
         private int IOnLoadLineCylinderAlarm;       //输入：来料线气缸状态报警
 
@@ -98,6 +100,7 @@ namespace Machine
         public bool bSaveDataEnable;                 // 保存数据使能
         public int nSaveDataTime;                    // 保存数据间隔时间
         private string nOvenDataAddr;                // 保存地址路径
+        private bool ManualSafeEnabled;                // 人工操作台光栅使能
 
         // 生产统计列表
         public int m_nOnloadTotal;                  // 上料数量
@@ -403,11 +406,15 @@ namespace Machine
             this.IRobotCrash = new int[(int)SystemIOGroup.RobotCrash];
             this.ITransferGoat = new int[2];
 
+            this.IManualSafeSignal = -1;
+            this.OManualSafeSignal = -1;
+
             this.lockRowCol = new object();
             this.pltMaxRow = (int)PltRowCol.MaxRow;
             this.pltMaxCol = (int)PltRowCol.MaxCol;
             this.sLineNum = "1";
             this.reOvenWait = true;
+            this.ManualSafeEnabled = true;
             this.productFormula = 1;
             this.wcserverIP = "192.168.1.11";
             this.OverOrder = false;
@@ -434,6 +441,7 @@ namespace Machine
             InsertPrivateParam("PalletMaxCol", "托盘最大列", "托盘最大列数 >0", pltMaxCol, RecordType.RECORD_INT);
             InsertPrivateParam("sLineNum", "拉线", "拉线名称", sLineNum, RecordType.RECORD_STRING);
             //InsertPrivateParam("reOvenWait", "回炉选择", "TRUE回炉上传水含量，FALSE不回炉", reOvenWait, RecordType.RECORD_BOOL);
+            InsertPrivateParam("ManualSafeEnabled", "人工操作台光栅使能", "TRUE启用，FALSE禁用", ManualSafeEnabled, RecordType.RECORD_BOOL);
             InsertPrivateParam("productFormula", "产品配方", "启用第几套电机点位", productFormula, RecordType.RECORD_INT);
             InsertPrivateParam("wcserverIP", "水含量服务端IP", "服务端IP", wcserverIP, RecordType.RECORD_INT);
             InsertPrivateParam("MaxWaitOffFloorCount", "最大下料腔体数量", "最大下料腔体数量，大于最大腔体数量，不下假电池", nMaxWaitOffFloorCount, RecordType.RECORD_INT);
@@ -1050,6 +1058,7 @@ namespace Machine
             this.pltMaxCol = IniFile.ReadInt("Parameter", "PalletMaxCol", this.pltMaxCol, Def.GetAbsPathName(Def.MachineCfg));
             this.sLineNum = IniFile.ReadString("Parameter", "sLineNum", "1", Def.GetAbsPathName(Def.MachineCfg));
             this.reOvenWait = IniFile.ReadBool("Parameter", "reOvenWait", true, Def.GetAbsPathName(Def.MachineCfg));
+            this.ManualSafeEnabled= IniFile.ReadBool("Parameter", "ManualSafeEnabled", true, Def.GetAbsPathName(Def.MachineCfg));
             this.productFormula = IniFile.ReadInt("Parameter", "productFormula", this.productFormula, Def.GetAbsPathName(Def.MachineCfg));
             this.wcserverIP = IniFile.ReadString("Parameter", "wcserverIP", this.wcserverIP, Def.GetAbsPathName(Def.MachineCfg));
             this.UseMesPrarm = IniFile.ReadBool("Parameter", "UseMesPrarm", true, Def.GetAbsPathName(Def.MachineCfg));
@@ -1359,6 +1368,14 @@ namespace Machine
             key = ("IOnLoadLineCylinderAlarm");
             this.IOnLoadLineCylinderAlarm = DecodeInputID(IniFile.ReadString(module, key, "", path));
             if (IOnLoadLineCylinderAlarm>-1) inputs.Add(IOnLoadLineCylinderAlarm);
+
+            key = ("OManualSafeSignal");
+            this.OManualSafeSignal = DecodeOutputID(IniFile.ReadString(module, key, "", path));
+            if (OManualSafeSignal > -1) outputs.Add(OManualSafeSignal);
+
+            key = ("IManualSafeSignal");
+            this.IManualSafeSignal = DecodeInputID(IniFile.ReadString(module, key, "", path));
+            if (IManualSafeSignal > -1) inputs.Add(IManualSafeSignal);
 
             #region 机器人报警输入
             count = (int)SystemIOGroup.OnOffLoadRobot;
@@ -2153,6 +2170,18 @@ namespace Machine
                 ShowMsgBox.ShowDialog(strMsg, MessageType.MsgAlarm);
                 transferRobot.RecordMessageInfo(strMsg, MessageType.MsgAlarm);
 
+            }
+
+            if (ManualSafeEnabled && InputState(IManualSafeSignal, true))
+            {
+                this.RunsCtrl.Stop();
+                OutputAction(OManualSafeSignal, true);
+                string strMsg = "人工操作台光栅报警，请检查状态后复位启动！";
+                ShowMsgBox.ShowDialog(strMsg, MessageType.MsgAlarm);
+            }
+            else
+            {
+                OutputAction(OManualSafeSignal, false);
             }
         }
 
