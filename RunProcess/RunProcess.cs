@@ -459,7 +459,7 @@ namespace Machine
         {
             string section, key;
             section = this.RunModule;
-
+            //11
             // 读取自动步骤
             this.nextAutoStep = FileStream.ReadInt(section, "nextAutoStep", (int)this.nextAutoStep);
 
