@@ -416,16 +416,16 @@
             this.dgvPump.RowHeadersWidth = 62;
             this.tableLayoutPanel4.SetRowSpan(this.dgvPump, 4);
             this.dgvPump.RowTemplate.Height = 23;
-            this.dgvPump.Size = new System.Drawing.Size(387, 231);
+            this.dgvPump.Size = new System.Drawing.Size(386, 231);
             this.dgvPump.TabIndex = 0;
             this.dgvPump.SelectionChanged += new System.EventHandler(this.dgvPump_SelectionChanged);
             // 
             // btnPumpConnect
             // 
             this.btnPumpConnect.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnPumpConnect.Location = new System.Drawing.Point(396, 3);
+            this.btnPumpConnect.Location = new System.Drawing.Point(395, 3);
             this.btnPumpConnect.Name = "btnPumpConnect";
-            this.btnPumpConnect.Size = new System.Drawing.Size(49, 29);
+            this.btnPumpConnect.Size = new System.Drawing.Size(50, 29);
             this.btnPumpConnect.TabIndex = 1;
             this.btnPumpConnect.Text = "连接";
             this.btnPumpConnect.UseVisualStyleBackColor = true;
@@ -434,9 +434,9 @@
             // btnPumpDisConnect
             // 
             this.btnPumpDisConnect.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnPumpDisConnect.Location = new System.Drawing.Point(396, 38);
+            this.btnPumpDisConnect.Location = new System.Drawing.Point(395, 38);
             this.btnPumpDisConnect.Name = "btnPumpDisConnect";
-            this.btnPumpDisConnect.Size = new System.Drawing.Size(49, 29);
+            this.btnPumpDisConnect.Size = new System.Drawing.Size(50, 29);
             this.btnPumpDisConnect.TabIndex = 2;
             this.btnPumpDisConnect.Text = "断开";
             this.btnPumpDisConnect.UseVisualStyleBackColor = true;
